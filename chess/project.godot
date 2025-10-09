@@ -1,0 +1,17 @@
+config_version=5
+
+[application]
+
+config/name="Godot Chess OLD"
+config/description="The classic game of Chess in Godot Engine"
+run/main_scene="res://board.tscn"
+config/features=PackedStringArray("4.4", "Forward Plus")
+config/icon="res://Chess.png"
+
+[editor_plugins]
+
+enabled=PackedStringArray()
+
+[filesystem]
+
+import/blender/enabled=false

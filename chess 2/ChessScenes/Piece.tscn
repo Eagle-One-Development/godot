@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=3 uid="uid://conie21co1tgi"]
+
+[ext_resource type="Script" uid="uid://dsdsaorwepr3o" path="res://ChessScripts/piece.gd" id="2_je2t6"]
+[ext_resource type="Texture2D" uid="uid://dl5dp47xg34sb" path="res://ChessTextures/WPawn.svg" id="3_duyk7"]
+
+[node name="Piece" type="Sprite2D"]
+texture = ExtResource("3_duyk7")
+script = ExtResource("2_je2t6")
+
+[node name="SpriteMain" type="Sprite2D" parent="."]
+z_index = 1
+
+[node name="SpriteAccents" type="Sprite2D" parent="."]
+modulate = Color(0.763613, 3.29696e-06, 8.66354e-07, 1)
+show_behind_parent = true
+z_index = -1
+scale = Vector2(1.4, 1.4)

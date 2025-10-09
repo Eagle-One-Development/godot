@@ -1,0 +1,15 @@
+[gd_scene load_steps=3 format=3 uid="uid://b687ps1v5tbjm"]
+
+[ext_resource type="Script" uid="uid://drjatdmhs176d" path="res://Square.gd" id="1_y4sij"]
+[ext_resource type="Texture2D" uid="uid://ccik8ed32ejtf" path="res://ChessTextures/octagon-64.png" id="2_1dlly"]
+
+[node name="Square" type="Node2D"]
+script = ExtResource("1_y4sij")
+light_color = Color(1, 1, 0.623529, 1)
+dark_color = Color(0.294028, 0.294028, 0.294028, 1)
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_1dlly")
+
+[node name="Node" type="Node" parent="."]
+script = ExtResource("1_y4sij")

@@ -1,0 +1,13 @@
+[gd_scene load_steps=5 format=3 uid="uid://1sle88win6dm"]
+
+[ext_resource type="Script" uid="uid://b1ccvyfxyu4aj" path="res://ChessScripts/queen.gd" id="1_djmia"]
+[ext_resource type="Texture2D" uid="uid://cla2mshxp0elx" path="res://ChessTextures/BQueen.svg" id="2_grtjk"]
+[ext_resource type="Texture2D" uid="uid://cr1lku07l36wb" path="res://ChessTextures/WQueen.svg" id="3_fvleu"]
+[ext_resource type="PackedScene" uid="uid://conie21co1tgi" path="res://ChessScenes/Piece.tscn" id="4_evbor"]
+
+[node name="Queen" type="Sprite2D"]
+script = ExtResource("1_djmia")
+Black = ExtResource("2_grtjk")
+White = ExtResource("3_fvleu")
+
+[node name="Piece" parent="." instance=ExtResource("4_evbor")]

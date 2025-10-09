@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://dy2jm12rluagf"]
+
+[ext_resource type="Script" uid="uid://bvirfme0a3c76" path="res://ChessScripts/square.gd" id="1_6dnn8"]
+
+[node name="Square" type="Button"]
+flat = true
+script = ExtResource("1_6dnn8")
