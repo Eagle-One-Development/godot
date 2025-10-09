@@ -26,6 +26,7 @@ GlobalInfo="*res://global_info.gd"
 window/size/viewport_width=1920
 window/size/viewport_height=1100
 window/size/borderless=true
+window/subwindows/embed_subwindows=false
 
 [editor]
 

@@ -10,7 +10,7 @@ var SelectedPiece = null
 
 func _ready() -> void:
 	if board_ref != null:
-		print("UI window created for board:", board_ref.name)
+		print()
 	GlobalInfo.selected_piece_changed.connect(_on_selected_piece_changed)
 	label.text = "game start; nothing selected"
 
@@ -30,7 +30,7 @@ func _on_selected_piece_changed(new_piece: Node):
 		
 func Init(board: Node) -> void:
 	board_ref = board
-	print("UI window created for board:", board_ref)
+	print("UI window Init for board:", board_ref)
 	title = "Game UI"
 	always_on_top = true
 	exclusive = false

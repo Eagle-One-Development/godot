@@ -54,7 +54,7 @@ func ClearSelection():
 
 # --- Spawn a piece on a square ---
 func SpawnPieceAtSquare(piece_type: String, square_node: Node, faction: String) -> Node:
-	print("attempting SpawnPieceAtSquare")
+	#print("attempting SpawnPieceAtSquare")
 	var piece_scene: PackedScene = preload("res://ChessScenes/Piece.tscn")
 	var piece_instance = piece_scene.instantiate()
 	piece_instance.name = "%s_%s" % [faction, piece_type]
@@ -69,7 +69,7 @@ func SpawnPieceAtSquare(piece_type: String, square_node: Node, faction: String) 
 	else:
 		push_error("Piece missing Bootstrap: %s" % piece_instance.name)
 
-	print("Spawned %s at %s" % [piece_instance.name, square_node.name])
+	#print("Spawned %s at %s" % [piece_instance.name, square_node.name])
 	return piece_instance
 
 # --- Board generation ---
@@ -115,17 +115,41 @@ func _ready() -> void:
 			add_child(tile)
 
 	# Spawn pieces using your offsets
-	await RegularGameOffset()
+	RegularGameOffset()
 
-	# Spawn UI as floating OS window
+# --- Floating UI Window ---
 	var ui_scene: PackedScene = load("res://gameplayui.tscn")
 	if not ui_scene:
 		push_error("Failed to load UI scene")
 		return
+
 	var ui_window = ui_scene.instantiate()
-	get_tree().root.add_child(ui_window)
-	ui_window.popup()
+	get_window().call_deferred("add_child", ui_window)
+	ui_window.Init(self)
+
+# --- Arrange windows side-by-side (keep sizes unchanged) ---
+	await get_tree().process_frame # ensure ui_window is created first
+
+	var main_window := get_window()
+	var main_pos := main_window.position
+	var main_size := main_window.size
+	var screen_rect := DisplayServer.screen_get_usable_rect(main_window.current_screen)
+	var screen_w := screen_rect.size.x
+
+	# Try to place UI window to the right of the main one
+	var desired_ui_x := main_pos.x + main_size.x + 10 # small 10px gap
+	var desired_ui_y := main_pos.y
+
+	# If it would go off-screen, move it to the left instead
+	if desired_ui_x + ui_window.size.x > screen_w:
+		desired_ui_x = max(0, main_pos.x - ui_window.size.x - 10)
+
+	ui_window.position = Vector2(desired_ui_x, desired_ui_y)
+	ui_window.always_on_top = true
+	ui_window.exclusive = false
+	ui_window.title = "Game UI"
 	ui_window.show()
+
 
 # --- Tile click handler ---
 func _on_tile_pressed(x: int, y: int) -> void:

@@ -1,21 +1,18 @@
-extends Button
+extends Control
 
-@export var coord_x: int
-@export var coord_y: int
-@export var base_color: Color = Color(1,1,1)
+@export var DefaultColor: Color
+@export var HighlightColor: Color = Color(0,1,0,0.5)
+var IsLightSquare: bool
+
+@onready var background = $Background
 @onready var highlight = $Highlight
 
 func _ready():
-	self.flat = true
-	self.self_modulate = base_color
-	highlight.color = Color(1,1,1,0)
-	highlight.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	text = "" # no label
+	background.color = DefaultColor
+	highlight.visible = false
 
-func Highlight(color: Color, duration: float = 0.25):
-	var tween = get_tree().create_tween()
-	tween.tween_property(highlight, "color", Color(color.r, color.g, color.b, 1), duration)
+func ShowHighlight():
+	highlight.visible = true
 
-func ClearHighlight(duration: float = 0.2):
-	var tween = get_tree().create_tween()
-	tween.tween_property(highlight, "color:a", 0, duration)
+func HideHighlight():
+	highlight.visible = false

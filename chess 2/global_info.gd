@@ -39,18 +39,23 @@ var Turn = 0
 var SavedNode = ""
 signal selected_piece_changed(new_piece)
 
+var _selected_piece: Node
+
 var SelectedPiece: Node:
 	set(value):
-		SelectedPiece = value
-		emit_signal("selected_piece_changed", value)
-		print("Selected Piece: ", value)
+		if _selected_piece == value:
+			ClearSelection()
+		else:
+			_selected_piece = value
+			emit_signal("selected_piece_changed", value)
+			print("Selected Piece: ", value)
 	get:
-		return SelectedPiece
-		SelectedPiece.HighlightMoves()
+		return _selected_piece
 
 func ClearSelection():
-	SelectedPiece = null
+	_selected_piece = null
 	print("Selection cleared")
+	emit_signal("selected_piece_changed", null)
 
 # Dictionary of factions and their colors
 var FactionColors := {

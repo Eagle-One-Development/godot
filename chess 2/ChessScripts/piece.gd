@@ -53,15 +53,15 @@ func HighlightMoves():
 
 	
 func OnClick():
-	print("OnClick: ", Faction)
-	print("OnClick: ", PieceType)
-	print("OnClick: MoveDeltaXY = " + str(MoveDeltaXY))
+	#print("OnClick: ", Faction)
+	#print("OnClick: ", PieceType)
+	#print("OnClick: MoveDeltaXY = " + str(MoveDeltaXY))
 	#HighlightMoves()
 	GlobalInfo.SelectedPiece = self
 
 
 func Bootstrap(piece_input: String, square_input: String, faction_input: String):
-	print("Bootstrapping %s for %s at %s" % [piece_input, faction_input, square_input])
+	#print("Bootstrapping %s for %s at %s" % [piece_input, faction_input, square_input])
 	
 	# --- Populate instance variables ---
 	self.Faction = faction_input
@@ -99,13 +99,13 @@ func Bootstrap(piece_input: String, square_input: String, faction_input: String)
 	else:
 		push_warning("SpriteMain not found; applying texture to root node")
 		self.texture = piece_texture
-	print("Bootstrap: %s texture assigned!" % piece_input)
+	#print("Bootstrap: %s texture assigned!" % piece_input)
 
 	if has_node("SpriteAccents"):
 		$SpriteAccents.texture = piece_texture
 	else:
 		push_warning("SpriteAccents not found; applying texture to root node")
-	print("Bootstrap: %s accent texture assigned!" % piece_input)
+	#print("Bootstrap: %s accent texture assigned!" % piece_input)
 
 	# --- Apply faction colors ---
 	if not GlobalInfo.FactionColors.has(faction_input):
@@ -124,7 +124,7 @@ func Bootstrap(piece_input: String, square_input: String, faction_input: String)
 	else:
 		push_warning("SpriteAccents not found; secondary color skipped")
 	
-	print("Bootstrap: %s colors applied!" % faction_input)
+	#print("Bootstrap: %s colors applied!" % faction_input)
 
 	# --- Parent to square ---
 	if not GlobalInfo.AllSquares.has(square_input):
@@ -134,4 +134,4 @@ func Bootstrap(piece_input: String, square_input: String, faction_input: String)
 	self.reparent(square)
 	self.position = Vector2(GlobalInfo.TileXSize / 2, GlobalInfo.TileYSize / 2)
 	
-	print("Successfully bootstrapped %s for %s at %s" % [piece_input, faction_input, square_input])
+	#print("Successfully bootstrapped %s for %s at %s" % [piece_input, faction_input, square_input])
