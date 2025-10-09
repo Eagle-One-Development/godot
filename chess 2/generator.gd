@@ -18,14 +18,9 @@ extends Control
 
 signal SendLocation(Location: String)
 
-@export var Pawn: PackedScene
-@export var Bishop: PackedScene
-@export var Rook: PackedScene
-@export var Knight: PackedScene
-@export var Queen: PackedScene
-@export var King: PackedScene
-@export var Piece: PackedScene
-@export var Square: PackedScene
+@export var Piece: PackedScene = preload("res://ChessScenes/Piece.tscn")
+@onready var SquareScene: PackedScene = preload("res://ChessScenes/Square.tscn")
+
 
 var SelectedPiece: Node = null
 
@@ -71,8 +66,8 @@ func SpawnPieceAtSquare(piece_type: String, square_node: Node, faction: String) 
 
 	#print("Spawned %s at %s" % [piece_instance.name, square_node.name])
 	return piece_instance
-
 # --- Board generation ---
+
 func _ready() -> void:
 	GlobalInfo.TileXSize = TileXSize
 	GlobalInfo.TileYSize = TileYSize
@@ -86,33 +81,30 @@ func _ready() -> void:
 			var display_x = x + 1
 			var display_y = y + 1
 
-			var tile := Button.new()
-			tile.name = "%d-%d" % [display_x, display_y]
-			GlobalInfo.AllSquares[tile.name] = tile
-			tile.set_custom_minimum_size(Vector2(TileXSize, TileYSize))
+			# --- Instantiate Square Scene ---
+			var square_instance = SquareScene.instantiate()
+			square_instance.name = "%d-%d" % [display_x, display_y]
+			GlobalInfo.AllSquares[square_instance.name] = square_instance
 
-			# Position
-			var top_left_pos = Vector2(x * TileXSize, board_height_px - display_y * TileYSize)
-			tile.pivot_offset = Vector2(TileXSize / 2, TileYSize / 2)
-			tile.position = top_left_pos
+			# Set size dynamically based on generator
+			square_instance.SetTileSize(Vector2(TileXSize, TileYSize))
 
 			# Checkerboard color
 			var base_color = ColorSquareLight if (x + y) % 2 == 0 else ColorSquareDark
 			base_color = RandomizeColor(base_color, TileColorDriftPercent)
-			tile.self_modulate = base_color
-			tile.set_meta("original_color", base_color)
+			square_instance.SetBaseColor(base_color)
+			square_instance.set_meta("original_color", base_color)
 
-			# Highlight overlay behind pieces
-			var highlight := ColorRect.new()
-			highlight.name = "Highlight"
-			highlight.color = Color(1,1,1,0)  # white but fully transparent initially
-			highlight.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			highlight.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			highlight.size_flags_vertical = Control.SIZE_EXPAND_FILL
-			tile.add_child(highlight)
+			# Position
+			square_instance.pivot_offset = Vector2.ZERO
+			var top_left_pos = Vector2(x * TileXSize, y * TileXSize)  # simple top-left layout
+			square_instance.position = top_left_pos
 
-			tile.pressed.connect(Callable(self, "_on_tile_pressed").bind(display_x, display_y))
-			add_child(tile)
+			# Connect click signal
+			square_instance.connect("gui_input", Callable(self, "_on_square_gui_input").bind(display_x, display_y))
+
+			# Add to scene
+			add_child(square_instance)
 
 	# Spawn pieces using your offsets
 	RegularGameOffset()

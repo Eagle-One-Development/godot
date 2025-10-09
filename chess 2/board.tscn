@@ -1,9 +1,7 @@
-[gd_scene load_steps=6 format=3 uid="uid://d0qyk6v20uief"]
+[gd_scene load_steps=4 format=3 uid="uid://d0qyk6v20uief"]
 
 [ext_resource type="Script" uid="uid://dyqw4lpfqhgmb" path="res://generator.gd" id="1_ckrtr"]
 [ext_resource type="Theme" uid="uid://dnecmp61i4er4" path="res://ChessThemes/BoardTheme.tres" id="2_xhrpu"]
-[ext_resource type="PackedScene" uid="uid://conie21co1tgi" path="res://ChessScenes/Piece.tscn" id="3_jqgjh"]
-[ext_resource type="PackedScene" uid="uid://dy2jm12rluagf" path="res://ChessScenes/Square.tscn" id="4_vf5bc"]
 
 [sub_resource type="GDScript" id="GDScript_xhrpu"]
 script/source = "extends Control
@@ -25,7 +23,6 @@ script = ExtResource("1_ckrtr")
 Faction0 = "White"
 BoardXSize = 10
 BoardYSize = 10
-Piece = ExtResource("3_jqgjh")
-Square = ExtResource("4_vf5bc")
+ColorSquareLight = Color(0.572988, 0.572988, 0.572988, 1)
 
 [connection signal="SendLocation" from="Flow" to="." method="_on_flow_send_location"]
