@@ -21,8 +21,8 @@ tooltip_text = "
 theme = ExtResource("2_xhrpu")
 script = ExtResource("1_ckrtr")
 Faction0 = "White"
-BoardXSize = 10
-BoardYSize = 10
+BoardXSize = 20
+BoardYSize = 20
 ColorSquareLight = Color(0.572988, 0.572988, 0.572988, 1)
 
 [connection signal="SendLocation" from="Flow" to="." method="_on_flow_send_location"]

@@ -1,0 +1,32 @@
+[gd_scene load_steps=8 format=3 uid="uid://bdi483nt7wpi5"]
+
+[ext_resource type="Script" uid="uid://1f11iysub43x" path="res://Chess-ScenesScripts/menu.gd" id="1_cjuck"]
+[ext_resource type="Shader" uid="uid://4lbw4ob0v2gq" path="res://Chess-ScenesScripts/Tile.gdshader" id="1_csnck"]
+[ext_resource type="PackedScene" uid="uid://cofcl2tkqpy18" path="res://Chess-ScenesScripts/Tile.tscn" id="2_csnck"]
+[ext_resource type="PackedScene" uid="uid://dg5onm4ob8wec" path="res://Chess-ScenesScripts/Skirmish.tscn" id="2_jc2f5"]
+[ext_resource type="Texture2D" uid="uid://crvlxqg34gr6u" path="res://Chess-Assets/tileable-tt7002066-verydark.png" id="4_id8yk"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_id8yk"]
+shader = ExtResource("1_csnck")
+shader_parameter/tile_color = Color(1, 1, 1, 1)
+shader_parameter/highlight_strength = 0.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_518o2"]
+
+[node name="Menu" type="Control"]
+material = SubResource("ShaderMaterial_id8yk")
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_cjuck")
+tile_scene = ExtResource("2_csnck")
+columns = 14
+rows = 14
+tile_size = 90.0
+
+[node name="Background" type="Sprite2D" parent="."]
+self_modulate = Color(0.389147, 2.52686e-07, 0.213445, 1)
+material = SubResource("ShaderMaterial_518o2")
+scale = Vector2(2, 2)
+texture = ExtResource("4_id8yk")
+
+[node name="Skirmish" parent="." instance=ExtResource("2_jc2f5")]
