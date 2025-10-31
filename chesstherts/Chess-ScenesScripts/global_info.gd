@@ -67,12 +67,12 @@
 #}
 	#
 #
-#var Pawn: CompressedTexture2D
-#var Knight: CompressedTexture2D
-#var Bishop: CompressedTexture2D
-#var Rook: CompressedTexture2D
-#var Queen: CompressedTexture2D
-#var King: CompressedTexture2D
+var Pawn: CompressedTexture2D
+var Knight: CompressedTexture2D
+var Bishop: CompressedTexture2D
+var Rook: CompressedTexture2D
+var Queen: CompressedTexture2D
+var King: CompressedTexture2D
 #
 ## Dictionary to look up textures by piece name
 #var PieceTextures: Dictionary = {}

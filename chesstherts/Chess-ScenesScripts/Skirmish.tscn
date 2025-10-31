@@ -1,10 +1,14 @@
-[gd_scene load_steps=3 format=3 uid="uid://dg5onm4ob8wec"]
+[gd_scene load_steps=5 format=3 uid="uid://dg5onm4ob8wec"]
 
 [ext_resource type="Script" uid="uid://b6v0lswloevvm" path="res://Chess-ScenesScripts/skirmish.gd" id="1_01n61"]
+[ext_resource type="PackedScene" uid="uid://d0psr0sl4ojl0" path="res://Chess-ScenesScripts/Piece.tscn" id="2_pqef6"]
 [ext_resource type="Script" uid="uid://bnsf7k8sirpkr" path="res://Chess-ScenesScripts/skirmishui.gd" id="2_u7ioo"]
+[ext_resource type="PackedScene" uid="uid://cofcl2tkqpy18" path="res://Chess-ScenesScripts/Tile.tscn" id="3_megpe"]
 
 [node name="Skirmish" type="Node2D"]
 script = ExtResource("1_01n61")
+piece_scene = ExtResource("2_pqef6")
+tile_scene = ExtResource("3_megpe")
 
 [node name="SkirmishUILayer" type="CanvasLayer" parent="."]
 scale = Vector2(2, 2)
@@ -33,7 +37,7 @@ layout_mode = 2
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Button" type="Button" parent="SkirmishUILayer/SkirmishUI/Panel/VBoxContainer"]
+[node name="Button1" type="Button" parent="SkirmishUILayer/SkirmishUI/Panel/VBoxContainer"]
 layout_mode = 2
 text = "TEXT ETXT"
 

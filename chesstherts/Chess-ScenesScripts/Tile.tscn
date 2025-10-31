@@ -1,7 +1,8 @@
-[gd_scene load_steps=6 format=3 uid="uid://cofcl2tkqpy18"]
+[gd_scene load_steps=7 format=3 uid="uid://cofcl2tkqpy18"]
 
 [ext_resource type="Script" uid="uid://bx1yfs6nsocl8" path="res://Chess-ScenesScripts/tile.gd" id="1_3n7tw"]
 [ext_resource type="Texture2D" uid="uid://dagp6j1eneywj" path="res://Chess-Assets/octagon-64.png" id="1_j46gs"]
+[ext_resource type="PackedScene" uid="uid://d0psr0sl4ojl0" path="res://Chess-ScenesScripts/Piece.tscn" id="2_7jqk1"]
 [ext_resource type="Texture2D" uid="uid://dit3skmyivexu" path="res://Chess-Assets/BKing.svg" id="3_0q080"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_3n7tw"]
@@ -20,6 +21,7 @@ cache/0/20/0/scale = 1.0
 
 [node name="Tile" type="Node2D"]
 script = ExtResource("1_3n7tw")
+piece_scene = ExtResource("2_7jqk1")
 
 [node name="Background" type="Sprite2D" parent="."]
 material = SubResource("ShaderMaterial_3n7tw")

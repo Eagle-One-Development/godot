@@ -1,72 +1,60 @@
-#extends Sprite2D
+extends Node2D
+
 #
 #
-#
+# piece
 ## pieces texture are floating in top left of square... how to fix?
 #
 ## Extra ablilities
 #var DoubleStart = true
 #var EnPassant = false
+var skirmish = null
 #
-## Standard
-#var PieceColor: int
+var faction: String = "Skin"
+var piece_type: String = "Pawn"
+#var tile: PackedStrng
+var xy: String = "X-Y"
+
+var _parent_tile: Node = null
+var parent_tile: Node:
+	get:
+		return _parent_tile
+	set(value):
+		_parent_tile = value
+		print("Piece parent_tile set to:", value)
+
 #
-#var Faction: String = "Skin"
-#var PieceType: String = "Pawn"
-#var XY: String = "X-Y"
+var color_primary: Color = Color(1, 1, 1)
+var color_secondary: Color = Color(0.5, 0.5, 0.5)
 #
-#var ColorPrimary: Color = Color(1, 1, 1)
-#var ColorSecondary: Color = Color(0.5, 0.5, 0.5)
-#
-#var MoveDeltaXY: Array = []
-#
-#var AttackSameAsMove: bool = true
-#var AttackDeltaXY: Array = []
-#
-#var DefendSameAsAttack: bool = true
-#var DefendDeltaXY: Array = []
-#
-#func UpdateMobility(piece_input: String):
-	#print("Updating %s with %s mobility" % [self, piece_input])
-#
-#func HighlightMoves():
-	#if XY == "X-Y":
-		#push_warning("Piece does not have a valid XY position")
-		#return
-#
-	## clear any previous highlights
+
+var PieceTextures: Dictionary = {}
+
+
+
+func UpdateMobility(piece_input: String):
+	print("Updating %s with %s mobility" % [self, piece_input])
+
 	#
-	#GlobalInfo.ClearHighlights()
-#
-	#var current_coords = XY.split("-")
-	#var curr_x = int(current_coords[0])
-	#var curr_y = int(current_coords[1])
-#
-	#for delta in MoveDeltaXY:
-		#var target_x = curr_x + int(delta.x)
-		#var target_y = curr_y + int(delta.y)
-		#var square_name = "%d-%d" % [target_x, target_y]
-#
-		#if GlobalInfo.AllSquares.has(square_name):
-			#var square_node = GlobalInfo.AllSquares[square_name]
-			#GlobalInfo.AddHighlightedSquare(square_node, Faction)
-#
-	#
-#func OnClick():
-	##print("OnClick: ", Faction)
-	##print("OnClick: ", PieceType)
-	##print("OnClick: MoveDeltaXY = " + str(MoveDeltaXY))
-	##HighlightMoves()
+func OnClick():
+	print("OnClick: ", faction)
+	print("OnClick: ", piece_type)
+	print("OnClick: ", self.global_position)
+	print("OnClick: PARENT ", parent_tile)
+	#print("OnClick: MoveDeltaXY = " + str(MoveDeltaXY))
+	#HighlightMoves()
 	#GlobalInfo.SelectedPiece = self
 #
 #
-#func Bootstrap(piece_input: String, square_input: String, faction_input: String):
-	##print("Bootstrapping %s for %s at %s" % [piece_input, faction_input, square_input])
+func bootstrap(piece_input: String, tile_input: String, faction_input: String):
+	load_assets()
+	print("Bootstrapping %s for %s at %s" % [piece_input, faction_input, tile_input])
 	#
 	## --- Populate instance variables ---
-	#self.Faction = faction_input
-	#self.PieceType = piece_input
-	#self.XY = square_input
+	self.faction = faction_input
+	self.piece_type = piece_input
+	self.xy = tile_input
+	#self.global_position = parent_tile.global_position
 	#
 	## --- Validate piece type ---
 	#if not GlobalInfo.PieceTextures.has(piece_input):
@@ -92,15 +80,16 @@
 		#_:
 			#self.MoveDeltaXY = []  # default empty array for other pieces
 	#
-	## --- Assign texture ---
-	#var piece_texture: Texture2D = GlobalInfo.PieceTextures[piece_input]
-	#if has_node("SpriteMain"):
-		#$SpriteMain.texture = piece_texture
-	#else:
-		#push_warning("SpriteMain not found; applying texture to root node")
-		#self.texture = piece_texture
-	##print("Bootstrap: %s texture assigned!" % piece_input)
-#
+	# --- Assign texture ---
+	var piece_texture: Texture2D = PieceTextures[piece_input]
+	if has_node("SpriteMain"):
+		$SpriteMain.texture = piece_texture
+	else:
+		push_warning("SpriteMain not found; applying texture to root node")
+		self.texture = piece_texture
+
+	#print("Bootstrap: %s texture assigned!" % piece_input)
+
 	#if has_node("SpriteAccents"):
 		#$SpriteAccents.texture = piece_texture
 	#else:
@@ -124,7 +113,7 @@
 	#else:
 		#push_warning("SpriteAccents not found; secondary color skipped")
 	#
-	##print("Bootstrap: %s colors applied!" % faction_input)
+	#print("Bootstrap: %s colors applied!" % faction_input)
 #
 	## --- Parent to square ---
 	#if not GlobalInfo.AllSquares.has(square_input):
@@ -135,3 +124,14 @@
 	#self.position = Vector2(GlobalInfo.TileXSize / 2, GlobalInfo.TileYSize / 2)
 	#
 	##print("Successfully bootstrapped %s for %s at %s" % [piece_input, faction_input, square_input])
+
+
+func load_assets():
+	PieceTextures = {
+		"Pawn": load("res://Chess-Assets/WPawn.svg"),
+		"Knight": load("res://Chess-Assets/WKnight.svg"),
+		"Bishop": load("res://Chess-Assets/WBishop.svg"),
+		"Rook": load("res://Chess-Assets/WRook.svg"),
+		"Queen": load("res://Chess-Assets/WQueen.svg"),
+		"King": load("res://Chess-Assets/WKing.svg")
+	}
