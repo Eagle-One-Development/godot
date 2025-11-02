@@ -4,8 +4,8 @@ extends Control
 @export var columns: int = 8
 @export var rows: int = 8
 @export var tile_size: float = 64.0
-@export var faction1: String = "White"
-@export var faction2: String = "Black"
+@export var faction1: String = "Skins"
+@export var faction2: String = "Blue"
 @onready var skirmish: Node = $Skirmish
 
 @export var piece_scene: PackedScene # this points to piece.tscn

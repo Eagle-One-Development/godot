@@ -17,6 +17,8 @@ extends Node2D
 @export var piece_scene: PackedScene
 
 const OCTAGON_TEXTURE = preload("res://.godot/imported/octagon-64.png-969b76115dcf149304b27ac35f8b2ab5.ctex")
+var origin_color: Color = Color.WHITE
+
 
 var assign_dark: bool = false
 var playable: bool = true: # to set to true, you cant use the button, use the "all_tiles" array
@@ -89,10 +91,12 @@ func _set_board_color_pattern(x: int, y: int):
 
 func update_color():
 	background.modulate = color
+	
+func _reset_color():
+	print()
 
 func _on_click():
 	print("Tile clicked (", grid_x, "_", grid_y, ") and assign_dark = " ,assign_dark,)
-	background.modulate = Color(1, 0.2, 0.2)
 	print(self.global_position)
 	if occupant:
 		if occupant.has_method("OnClick"):
@@ -103,14 +107,14 @@ func _on_click():
 		print("No occupant on this tile")
 	var pawn = "King"
 	var black = "Black"
-	spawn_piece(skirmish.piece_scene, pawn, black)
+	spawn_piece(pawn, black)
 	#background.visible = true
 	#playable = false
 	#skirmish._Randomize_Delete_Tiles()
 	#spawnpiece()
 	
 	
-func spawn_piece(piece_scene: PackedScene, piece_type: String, faction: String):
+func spawn_piece(piece_type: String, faction: String):
 	if occupant:
 		push_warning("Tile already has a piece! " + str(name))
 		return

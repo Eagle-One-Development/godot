@@ -31,6 +31,7 @@ var menu: Node = null
 @export var tile_scene: PackedScene # this points to piece.tscn
 var columns: int = 8
 var rows: int = 8
+var board_center := Vector2(columns * 0.5, rows * 0.5)
 var tile_size: float = 64
 
 #var faction1: string = null
@@ -53,6 +54,8 @@ class TileManager:
 	var tile_lookup: Dictionary = {}   # Vector2i → Tile
 	var coord_lookup: Dictionary = {}  # Tile → Vector2i
 	var tile_size: float = 0.0
+	var faction1_row1_offset: Vector2i = Vector2i(0, 0) # bottom of screen
+	var faction2_row1_offset: Vector2i = Vector2i(0, 0) # top of screen
 
 	func setup_grid(tile_scene: PackedScene, parent: Node, cols: int, rows: int, _tile_size: float):
 		clear()
@@ -70,6 +73,8 @@ class TileManager:
 				var coords = Vector2i(x, y)
 				tile_lookup[coords] = tile
 				coord_lookup[tile] = coords
+	# establish spawn points for faction1 and faction2
+	# locate XY center of board, then do +-2  rows for empty
 
 	func clear():
 		for tile in tile_lookup.values():
@@ -156,39 +161,39 @@ func set_window_size() -> void:
 
 
 func instantiate_pieces():
-	# Faction 1
-	spawn_faction_row(1, menu.faction1row1, menu.faction1)
-	spawn_faction_row(0, menu.faction1row2, menu.faction1)
+	var board_center := Vector2(columns * 0.5, rows * 0.5)
 
-	# Faction 2 (top of board)
-	spawn_faction_row(6, menu.faction2row1, menu.faction2)
-	spawn_faction_row(7, menu.faction2row2, menu.faction2)
+	spawn_faction_row(board_center.y - 3, board_center.x, menu.faction1row1, menu.faction1)
+	spawn_faction_row(board_center.y - 4, board_center.x, menu.faction1row2, menu.faction1)
+
+	spawn_faction_row(board_center.y + 2, board_center.x, menu.faction2row1, menu.faction2)
+	spawn_faction_row(board_center.y + 3, board_center.x, menu.faction2row2, menu.faction2)
 
 
-func spawn_faction_row(row: int, pieces: Array, faction: String):
-	for x in range(pieces.size()):
-		var tile = tiles.get_tile(x, row)
-		if not tile:
-			push_warning("Tile not found at: ", x, row)
+func spawn_faction_row(row_offset: int, column: int, pieces: Array, faction: String) -> void:
+	if pieces.is_empty():
+		push_warning("No pieces to spawn for faction: " + faction)
+		return
+
+	var total_pieces: int = pieces.size()
+	var board_center_x: float = columns / 2.0
+	var start_x: int = int(board_center_x - total_pieces / 2.0)
+
+	for i in range(total_pieces):
+		var raw_piece = pieces[i]
+		if raw_piece == null or String(raw_piece).strip_edges() == "":
+			push_warning("Skipping invalid piece at index %d for faction %s" % [i, faction])
 			continue
-		
-		var piece_instance = piece_scene.instantiate()
-		tile.add_child(piece_instance)
 
-		# Center piece inside tile
-		piece_instance.position = Vector2.ZERO
+		var piece_type: String = String(raw_piece)
+		var x: int = start_x + i
+		var tile := tiles.get_tile(x, row_offset)
+		if not tile:
+			push_warning("Tile not found at: ", x, row_offset)
+			continue
 
-		# Set references
-		piece_instance._parent_tile = tile
-		piece_instance.skirmish = self
-		tile.occupant = piece_instance
-
-		# Bootstrap the piece
-		piece_instance.bootstrap(pieces[x], tile.name, faction)
-
-		print("Spawned piece ", pieces[x], " on tile ", tile.name, 
-			  " local_pos: ", piece_instance.position,
-			  " parent: ", piece_instance.get_parent())
+		tile.spawn_piece(piece_type, faction)
+		print("Spawned", piece_type, "for", faction, "at tile:", tile.name, "(x:", x, "y:", row_offset, ")")
 
 
 func _ready():
@@ -287,7 +292,7 @@ func ClearSelection():
 #var King: CompressedTexture2D
 #
 ## Dictionary to look up textures by piece name
-var PieceTextures: Dictionary = {}
+#var PieceTextures: Dictionary = {}
 #var PieceMoves: Array = []
 #
 #

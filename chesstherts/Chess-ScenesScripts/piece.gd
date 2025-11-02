@@ -29,6 +29,7 @@ var color_secondary: Color = Color(0.5, 0.5, 0.5)
 #
 
 var PieceTextures: Dictionary = {}
+var defense: int = 0
 
 
 
@@ -55,12 +56,51 @@ func bootstrap(piece_input: String, tile_input: String, faction_input: String):
 	self.piece_type = piece_input
 	self.xy = tile_input
 	#self.global_position = parent_tile.global_position
-	#
+
+
+
 	## --- Validate piece type ---
-	#if not GlobalInfo.PieceTextures.has(piece_input):
-		#push_error("Piece Type not found: %s" % piece_input)
-		#return
+	if not PieceTextures.has(piece_input):
+		push_error("Piece Type not found: %s" % piece_input)
+		return
+	# --- Assign texture ---
+	var piece_texture: Texture2D = PieceTextures[piece_input]
+	if has_node("SpriteMain"):
+		$SpriteMain.texture = piece_texture
+	else:
+		push_warning("SpriteMain not found; applying texture to root node")
+		self.texture = piece_texture
+	#print("Bootstrap: %s texture assigned!" % piece_input)
+
+
+
+	# --- Apply faction colors ---
+	if not FactionColors.has(faction_input):
+		push_error("Faction not found: %s" % faction_input)
+		return
+	var colors = FactionColors[faction_input]
+	if has_node("SpriteMain"):
+		$SpriteMain.modulate = colors.primary
+		color_primary = colors.primary
+	else:
+		self.modulate = colors.primary
+
+	if has_node("SpriteAccents"):
+		$SpriteAccents.modulate = colors.secondary
+		color_secondary = colors.secondary
+	else:
+		push_warning("SpriteAccents not found; secondary color skipped")
+	
+	print("Bootstrap: %s colors applied!" % faction_input)
 	#
+	
+	if has_node("SpriteAccents"):
+		$SpriteAccents.texture = piece_texture
+	else:
+		push_warning("SpriteAccents not found; applying texture to root node")
+	#print("Bootstrap: %s accent texture assigned!" % piece_input)
+
+
 	## --- Assign moves based on piece type ---
 	#match PieceType:
 		#"Queen":
@@ -80,40 +120,8 @@ func bootstrap(piece_input: String, tile_input: String, faction_input: String):
 		#_:
 			#self.MoveDeltaXY = []  # default empty array for other pieces
 	#
-	# --- Assign texture ---
-	var piece_texture: Texture2D = PieceTextures[piece_input]
-	if has_node("SpriteMain"):
-		$SpriteMain.texture = piece_texture
-	else:
-		push_warning("SpriteMain not found; applying texture to root node")
-		self.texture = piece_texture
 
-	#print("Bootstrap: %s texture assigned!" % piece_input)
 
-	#if has_node("SpriteAccents"):
-		#$SpriteAccents.texture = piece_texture
-	#else:
-		#push_warning("SpriteAccents not found; applying texture to root node")
-	##print("Bootstrap: %s accent texture assigned!" % piece_input)
-#
-	## --- Apply faction colors ---
-	#if not GlobalInfo.FactionColors.has(faction_input):
-		#push_error("Faction not found: %s" % faction_input)
-		#return
-	#var colors = GlobalInfo.FactionColors[faction_input]
-	#if has_node("SpriteMain"):
-		#$SpriteMain.modulate = colors.primary
-		#ColorPrimary = colors.primary
-	#else:
-		#self.modulate = colors.primary
-#
-	#if has_node("SpriteAccents"):
-		#$SpriteAccents.modulate = colors.secondary
-		#ColorSecondary = colors.secondary
-	#else:
-		#push_warning("SpriteAccents not found; secondary color skipped")
-	#
-	#print("Bootstrap: %s colors applied!" % faction_input)
 #
 	## --- Parent to square ---
 	#if not GlobalInfo.AllSquares.has(square_input):
@@ -135,3 +143,12 @@ func load_assets():
 		"Queen": load("res://Chess-Assets/WQueen.svg"),
 		"King": load("res://Chess-Assets/WKing.svg")
 	}
+# Dictionary of factions and their colors
+var FactionColors := {
+	"White": {"primary": Color(1, 1, 1, 1), "secondary": Color(0.1, 0.1, 0.1, 1)},
+	"Black": {"primary": Color(0.1, 0.1, 0.1, 1), "secondary": Color(0.7, 0.7, 0.7, 1)},
+	"Skins": {"primary": Color(0.9, 0.7, 0.6, 1), "secondary": Color(0.6, 0.4, 0.3, 1)},
+	"Red": {"primary": Color(0.76, 0, 0, 1), "secondary": Color(0.1, 0.1, 0.1, 1)},
+	"Blue": {"primary": Color(0.103, 0.405, 1, 1), "secondary": Color(0.9, 0.9, 0.9, 1)}
+}
+	
