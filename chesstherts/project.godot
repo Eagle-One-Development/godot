@@ -15,6 +15,10 @@ run/main_scene="uid://bdi483nt7wpi5"
 config/features=PackedStringArray("4.4", "GL Compatibility")
 config/icon="res://icon.svg"
 
+[autoload]
+
+FactionManager="*res://Chess-ScenesScripts/factionmanager.gd"
+
 [rendering]
 
 renderer/rendering_method="gl_compatibility"

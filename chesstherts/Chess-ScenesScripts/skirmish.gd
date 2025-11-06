@@ -48,11 +48,12 @@ var highlighted_tiles: Array = []  # 2D array: tiles[x][y]
 
 
 
-var tiles = TileManager.new()
+#var tiles = TileManager.new() #### old name for tile manager
+var tile_manager = TileManager.new()
 # --- Inner TileManager class ---
 class TileManager:
-	var tile_lookup: Dictionary = {}   # Vector2i → Tile
-	var coord_lookup: Dictionary = {}  # Tile → Vector2i
+	var tile_lookup: Dictionary = {}   # give Vector2i → Tile scene
+	var coord_lookup: Dictionary = {}  # give Tile scene → Vector2i
 	var tile_size: float = 0.0
 	var faction1_row1_offset: Vector2i = Vector2i(0, 0) # bottom of screen
 	var faction2_row1_offset: Vector2i = Vector2i(0, 0) # top of screen
@@ -68,9 +69,11 @@ class TileManager:
 				parent.add_child(tile)
 				tile.skirmish = parent
 				tile.position = Vector2(x * tile_size + offset, y * tile_size + offset)
+				tile.tile_manager = self
 				tile.setup(x + 1, y + 1)
 
 				var coords = Vector2i(x, y)
+				tile.xy = coords
 				tile_lookup[coords] = tile
 				coord_lookup[tile] = coords
 	# establish spawn points for faction1 and faction2
@@ -83,7 +86,7 @@ class TileManager:
 		tile_lookup.clear()
 		coord_lookup.clear()
 		
-	func get_info_of(value):
+	func get_info_of(value): # flexible input lookup VECTOR2I OR OBJECT
 		# If given a coordinate (Vector2i), return the tile
 		if typeof(value) == TYPE_VECTOR2I:
 			return tile_lookup.get(value, null)
@@ -157,7 +160,7 @@ func set_window_size() -> void:
 	else:
 		push_warning("No active window found to resize.")
 	#print("all_tiles type:", typeof(all_tiles))
-	#print("first element type:", typeof(all_tiles[0]) if all_tiles.size() > 0 else "none")
+	#print("first element type:", typeof(all_tiles[0]) if all_tile_manager.size() > 0 else "none")
 
 
 func instantiate_pieces():
@@ -187,7 +190,7 @@ func spawn_faction_row(row_offset: int, column: int, pieces: Array, faction: Str
 
 		var piece_type: String = String(raw_piece)
 		var x: int = start_x + i
-		var tile := tiles.get_tile(x, row_offset)
+		var tile := tile_manager.get_tile(x, row_offset)
 		if not tile:
 			push_warning("Tile not found at: ", x, row_offset)
 			continue
@@ -201,7 +204,7 @@ func _ready():
 	inherit_skirmish_data()
 	if tile_scene:
 		#tiles = TileManager.new()
-		tiles.setup_grid(tile_scene, self, columns, rows, tile_size)
+		tile_manager.setup_grid(tile_scene, self, columns, rows, tile_size)
 	else:
 		push_warning("Tile scene not assigned!")
 	skirmishui.init(self)  # give UI a reference to this Skirmish instance
@@ -225,18 +228,6 @@ func inherit_skirmish_data():
 		tile_size = parent.tile_size
 
 #
-#func ClearHighlights():
-	#for tile in highlighted_tiles:
-		#if tile and tile.is_inside_tree():
-			#var highlight = tile.get_node("Highlight")
-			#if highlight:
-				#highlight.color.a = 0  # hide the overlay
-	#highlighted_tiles.clear()
-#
-#func AddHighlightedTile(tile: Node, faction: String):
-	#if not tile:
-		#return
-#
 	#var target_color = FactionColors.get(faction, {}).get("primary", Color(1,1,1))
 	#var highlight = tile.get_node("Highlight")
 	#if not highlight:
@@ -247,8 +238,8 @@ func inherit_skirmish_data():
 	#var tween = get_tree().create_tween()
 	#tween.tween_property(highlight, "color", Color(target_color.r, target_color.g, target_color.b, 1), 0.25)
 #
-	#if not highlighted_tiles.has(tile):
-		#highlighted_tiles.append(tile)
+	#if not highlighted_tile_manager.has(tile):
+		#highlighted_tile_manager.append(tile)
 		#print("added a Highlight to ", tile)
 
 #
@@ -258,45 +249,38 @@ signal selected_piece_changed(new_piece)
 
 var _selected_piece: Node
 
+
 var SelectedPiece: Node:
 	set(value):
+		# Case 1: clicking same piece again = deselect
 		if _selected_piece == value:
 			ClearSelection()
-		else:
-			_selected_piece = value
-			emit_signal("selected_piece_changed", value)
-			print("Selected Piece: ", value)
+			return
+
+		# Case 2: another piece is already selected → deselect it first
+		if _selected_piece and _selected_piece.has_method("deselected"):
+			_selected_piece.deselected()
+
+		# Case 3: set the new selection
+		_selected_piece = value
+
+		if _selected_piece and _selected_piece.has_method("Selected"):
+			_selected_piece.Selected()
+
+		print("Selected Piece: ", _selected_piece)
+		emit_signal("selected_piece_changed", _selected_piece)
 	get:
 		return _selected_piece
 
+
+
 func ClearSelection():
+	if _selected_piece and _selected_piece.has_method("deselected"):
+		_selected_piece.deselected()
 	_selected_piece = null
 	print("Selection cleared")
 	emit_signal("selected_piece_changed", null)
 
-## Dictionary of factions and their colors
-#var FactionColors := {
-	#"White": {"primary": Color(1, 1, 1, 1), "secondary": Color(0.1, 0.1, 0.1, 1)},
-	#"Black": {"primary": Color(0.1, 0.1, 0.1, 1), "secondary": Color(0.7, 0.7, 0.7, 1)},
-	#"Skins": {"primary": Color(0.9, 0.7, 0.6, 1), "secondary": Color(0.6, 0.4, 0.3, 1)},
-	#"Red": {"primary": Color(0.76, 0, 0, 1), "secondary": Color(0.1, 0.1, 0.1, 1)},
-	#"Blue": {"primary": Color(0.103, 0.405, 1, 1), "secondary": Color(0.9, 0.9, 0.9, 1)}
-#}
-	#
-#
-#var Pawn: CompressedTexture2D
-#var Knight: CompressedTexture2D
-#var Bishop: CompressedTexture2D
-#var Rook: CompressedTexture2D
-#var Queen: CompressedTexture2D
-#var King: CompressedTexture2D
-#
-## Dictionary to look up textures by piece name
-#var PieceTextures: Dictionary = {}
-#var PieceMoves: Array = []
-#
-#
-#
 #func RandomizeColor(color: Color, percent: float) -> Color:
 	## percent = 0.05 means ±5% variation
 	#var r = clamp(color.r + randf_range(-percent, percent), 0.0, 1.0)
@@ -304,59 +288,19 @@ func ClearSelection():
 	#var b = clamp(color.b + randf_range(-percent, percent), 0.0, 1.0)
 	#return Color(r, g, b, color.a)
 	#
-#
-#func GenerateKnight():
-	#var moves: Array = [
-	#Vector2(2, 1),
-	#Vector2(1, 2),
-	#Vector2(-1, 2),
-	#Vector2(-1, -2),
-	#Vector2(-2, 1),
-	#Vector2(-2, -1),
-	#Vector2(1, -2),
-	#Vector2(2, -1)
-	#]
-	#return moves
-#
-#func GenerateDiagonals(max_range: int ) -> Array:
-	#var moves: Array = []
-	#for i in range(1, max_range + 1):
-		#moves.append(Vector2(i, i))     # Up-right
-		#moves.append(Vector2(-i, i))    # Up-left
-		#moves.append(Vector2(i, -i))    # Down-right
-		#moves.append(Vector2(-i, -i))   # Down-left
-	#return moves
-	#
-#func GenerateFlats(max_range: int ) -> Array:
-	#var moves: Array = []
-	#for i in range(1, max_range + 1):
-		#moves.append(Vector2(i, 0))     # to right
-		#moves.append(Vector2(-i, 0))     # to left
-		#moves.append(Vector2(0, i))     # to up
-		#moves.append(Vector2(0, -i))     # to down
-	#return moves
-	#
-#func GenerateRings(max_range: int ) -> Array:
-	#var moves: Array = []
-	#for i in range(1, max_range + 1):
-		#moves.append(Vector2(i, i))     # Up-right
-		#moves.append(Vector2(-i, i))    # Up-left
-		#moves.append(Vector2(i, -i))    # Down-right
-		#moves.append(Vector2(-i, -i))   # Down-left
-	#return moves
 	
 
 func _Randomize_Delete_Tiles():
 	print("trying to random delete")
 
 	# 1. Check if we have any tiles
-	if tiles.tile_lookup.is_empty():
+	if tile_manager.tile_lookup.is_empty():
 		print("no tiles found")
 		return
 
 	# 2. Pick a random coordinate key from the dictionary
-	var random_coords = tiles.tile_lookup.keys().pick_random()
-	var random_tile = tiles.tile_lookup[random_coords]
+	var random_coords = tile_manager.tile_lookup.keys().pick_random()
+	var random_tile = tile_manager.tile_lookup[random_coords]
 
 	# 3. Act on the tile
 	print("Randomly disabled tile at:", random_coords, "|", random_tile)
@@ -364,4 +308,4 @@ func _Randomize_Delete_Tiles():
 	random_tile.playable = false
 
 	# Optional: remove the tile entirely from the grid
-	# tiles.remove_tile(random_tile)
+	# tile_manager.remove_tile(random_tile)
