@@ -23,7 +23,8 @@ tile_scene = ExtResource("2_csnck")
 columns = 10
 rows = 10
 tile_size = 70.0
-faction1 = "Red"
+faction1 = "Blue"
+faction2 = "Skins"
 piece_scene = ExtResource("4_518o2")
 
 [node name="Background" type="Sprite2D" parent="."]

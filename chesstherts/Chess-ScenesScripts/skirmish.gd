@@ -263,9 +263,9 @@ var SelectedPiece: Node:
 
 		# Case 3: set the new selection
 		_selected_piece = value
-
-		if _selected_piece and _selected_piece.has_method("Selected"):
-			_selected_piece.Selected()
+		
+		if _selected_piece and _selected_piece.has_method("selected"):
+			_selected_piece.selected()
 
 		print("Selected Piece: ", _selected_piece)
 		emit_signal("selected_piece_changed", _selected_piece)

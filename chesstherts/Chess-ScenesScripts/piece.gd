@@ -14,6 +14,8 @@ var faction: String = "Skin"
 var piece_type: String = "Pawn"
 #var tile: PackedStrng
 var xy: Vector2i = Vector2i(0, 0)
+var _highlight_active: bool = false
+
 
 var _parent_tile: Node = null
 var parent_tile: Node:
@@ -32,6 +34,7 @@ var PieceTextures: Dictionary = {}
 var defense: int = 0
 
 var MoveDeltaXY: Array[Vector2i] = []
+var move_instructions = []  # default empty array for unknown pieces
 var highlighted_tiles: Array = []
 var tile_manager
 
@@ -48,6 +51,7 @@ func OnClick():
 	#print("OnClick: PARENT ", parent_tile)
 	print("OnClick: MoveDeltaXY = " + str(MoveDeltaXY))
 	print(name, " is at location ", xy)
+	print("onclick highlight active", _highlight_active)
 	#print("OnClick: SKIRMISH = ", skirmish)
 	#print("OnClick: TILEMANAGER = ", tile_manager)
 	#HighlightMoves()
@@ -59,62 +63,105 @@ func OnClick():
 	#print(name, " got selected!")
 	#print("OnClick: TILEMANAGER = ", tile_manager)
 
-func Selected() -> void:
-	print(name, " got selected!")
-	if not tile_manager:
-		push_warning("%s has no TileManager reference!" % name)
-		return
-	if MoveDeltaXY.is_empty():
-		push_warning("%s has no MoveDeltaXY data!" % name)
-		return
-	if xy == null:
-		push_warning("%s has no xy assigned!" % name)
-		return
-	# --- Get reachable tiles ---
-	var reachable_tiles: Array = get_reachable_tiles()
-	if reachable_tiles.is_empty():
+func selected() -> void:
+	# Start highlight sequence
+	_highlight_active = true
+	print("_highlight_active = ", _highlight_active)
+
+	var reachable_tiles = get_reachable_tiles()
+	if not reachable_tiles:
 		print("%s found no reachable tiles" % name)
 		return
-	# --- Highlight them ---
-	highlighted_tiles.clear()
-	for tile in reachable_tiles:
-		if tile and tile.has_method("_highlight_for_faction"):
+
+	# Group tiles by distance
+	var waves := {}
+	for item in reachable_tiles:
+		var dist = item.distance
+		if not waves.has(dist):
+			waves[dist] = []
+		waves[dist].append(item.tile)
+
+	var sorted_distances = waves.keys()
+	sorted_distances.sort()  # closest first
+	# Timing
+	var total_time: float = 0.01
+	var first_delay: float = 0.01
+	var remaining_time: float = total_time - first_delay
+	var num_waves: int = sorted_distances.size()
+	var per_wave_delay: float = 0
+	if num_waves > 1:
+		per_wave_delay = remaining_time / (num_waves - 1)
+
+	# Highlight each wave
+	for i in range(num_waves):
+		# Wait for delay
+		await get_tree().create_timer(first_delay + per_wave_delay * i).timeout
+
+		# Stop if deselected
+		if not _highlight_active:
+			return
+
+		for tile in waves[sorted_distances[i]]:
 			tile._highlight_for_faction(faction)
-			highlighted_tiles.append(tile)
-		else:
-			push_warning("Tile missing _highlight_for_faction: " + str(tile))
-	print("Highlighted %d tiles for %s" % [highlighted_tiles.size(), name])
 
 
-func deselected():
-	print(name, " got unselected!")
-	for tile in highlighted_tiles:
-		if tile and tile.has_method("_reset_color"):
-			tile._reset_color()
-	highlighted_tiles.clear()
 
 
+func deselected() -> void:
+	# Stop any ongoing highlight sequence
+	_highlight_active = false
+
+	# Reset highlighted tiles
+	var reachable_tiles = get_reachable_tiles()
+	for item in reachable_tiles:
+		item.tile._reset_color()
+
+	print("%s got unselected!" % name)
+
+
+	
+	
 func get_reachable_tiles() -> Array:
-	print("Getting reachable tiles for ", name, " at ", xy)
-	var tiles: Array = []
+	var tiles_with_distance: Array = []
 
-	for delta in MoveDeltaXY:
-		if typeof(delta) != TYPE_VECTOR2I:
-			push_warning("%s invalid delta: %s" % [name, str(delta)])
-			continue
+	if not move_instructions:
+		push_warning("%s has no move instructions!" % name)
+		return tiles_with_distance
 
-		var target_xy: Vector2i = xy + delta
-		var target_tile = tile_manager.get_tile(target_xy.x, target_xy.y)
+	for instr in move_instructions:
+		var direction: Vector2i = instr.direction
+		var max_range: int = instr.max_range
+		var move_type: String = instr.type  # "sliding" or "step"
 
-		if target_tile:
-			tiles.append(target_tile)
-			print("  Found tile at ", target_xy)
-		else:
-			print("  No tile at ", target_xy)
+		if move_type == "step":
+			var target_xy = xy + direction
+			var target_tile = tile_manager.get_tile(target_xy.x, target_xy.y)
+			if target_tile and (not target_tile.occupant or target_tile.occupant.faction != faction):
+				var dist = (target_xy - xy).length()
+				tiles_with_distance.append({"distance": dist, "tile": target_tile})
 
-	return tiles
+		elif move_type == "sliding":
+			for i in range(1, max_range + 1):
+				var target_xy = xy + direction * i
+				var target_tile = tile_manager.get_tile(target_xy.x, target_xy.y)
+				if not target_tile:
+					break
+				if target_tile.occupant:
+					if target_tile.occupant.faction != faction:
+						var dist = (target_xy - xy).length()
+						tiles_with_distance.append({"distance": dist, "tile": target_tile})
+					break
+				var dist = (target_xy - xy).length()
+				tiles_with_distance.append({"distance": dist, "tile": target_tile})
 
-#
+	# Sort closest first
+	tiles_with_distance.sort_custom(Callable(self, "_sort_by_distance"))
+	return tiles_with_distance
+
+
+func _sort_by_distance(a, b):
+	return int(b.distance - a.distance)  # closest first
+
 #
 func bootstrap(piece_input: String, tile_input: Vector2i, faction_input: String):
 	load_assets()
@@ -141,10 +188,6 @@ func bootstrap(piece_input: String, tile_input: Vector2i, faction_input: String)
 	#print("Bootstrap: %s texture assigned!" % piece_input)
 	
 	# --- Apply faction colors ---
-	if not FactionColors.has(faction_input):
-		push_error("Faction not found: %s" % faction_input)
-		return
-	#var colors = FactionColors[faction_input]
 	var color_primary := FactionManager.get_color(faction, "primary")
 	if has_node("SpriteMain"):
 		$SpriteMain.modulate = color_primary
@@ -169,30 +212,65 @@ func bootstrap(piece_input: String, tile_input: Vector2i, faction_input: String)
 	#print("Bootstrap: %s accent texture assigned!" % piece_input)
 
 	# --- Assign moves based on piece type ---
+	move_instructions.clear()
+	print("now adding move instructions")
+
 	match piece_type:
 		"Queen":
-			self.MoveDeltaXY = GenerateDiags(7)
-			self.MoveDeltaXY += GenerateAxis(7)
+			# 4 diagonal sliding + 4 axis sliding
+			move_instructions += [
+				{"direction": Vector2i(1,1), "max_range": 7, "type": "sliding"},
+				{"direction": Vector2i(1,-1), "max_range": 7, "type": "sliding"},
+				{"direction": Vector2i(-1,1), "max_range": 7, "type": "sliding"},
+				{"direction": Vector2i(-1,-1), "max_range": 7, "type": "sliding"},
+				{"direction": Vector2i(1,0), "max_range": 7, "type": "sliding"},
+				{"direction": Vector2i(-1,0), "max_range": 7, "type": "sliding"},
+				{"direction": Vector2i(0,1), "max_range": 7, "type": "sliding"},
+				{"direction": Vector2i(0,-1), "max_range": 7, "type": "sliding"}
+			]
 		"Knight":
-			self.MoveDeltaXY = GenerateKnight()
+			move_instructions += [
+				{"direction": Vector2i(2,1), "max_range": 1, "type": "step"},
+				{"direction": Vector2i(1,2), "max_range": 1, "type": "step"},
+				{"direction": Vector2i(-1,2), "max_range": 1, "type": "step"},
+				{"direction": Vector2i(-2,1), "max_range": 1, "type": "step"},
+				{"direction": Vector2i(-2,-1), "max_range": 1, "type": "step"},
+				{"direction": Vector2i(-1,-2), "max_range": 1, "type": "step"},
+				{"direction": Vector2i(1,-2), "max_range": 1, "type": "step"},
+				{"direction": Vector2i(2,-1), "max_range": 1, "type": "step"}
+			]
 		"Pawn":
-			return
-			#self.MoveDeltaXY = GenerateFlats(1)
+			# Simple pawn moves (forward only, no captures yet)
+			# Could later add diagonal capture instructions
+			move_instructions += [
+				{"direction": Vector2i(0,1), "max_range": 1, "type": "step"}
+			]
 		"Rook":
-			self.MoveDeltaXY = GenerateAxis(7)
+			move_instructions += [
+				{"direction": Vector2i(1,0), "max_range": 7, "type": "sliding"},
+				{"direction": Vector2i(-1,0), "max_range": 7, "type": "sliding"},
+				{"direction": Vector2i(0,1), "max_range": 7, "type": "sliding"},
+				{"direction": Vector2i(0,-1), "max_range": 7, "type": "sliding"}
+			]
 		"King":
-			self.MoveDeltaXY = GenerateDiags(1)
-			self.MoveDeltaXY += GenerateAxis(1)
+			move_instructions += [
+				{"direction": Vector2i(1,1), "max_range": 1, "type": "step"},
+				{"direction": Vector2i(1,-1), "max_range": 1, "type": "step"},
+				{"direction": Vector2i(-1,1), "max_range": 1, "type": "step"},
+				{"direction": Vector2i(-1,-1), "max_range": 1, "type": "step"},
+				{"direction": Vector2i(1,0), "max_range": 1, "type": "step"},
+				{"direction": Vector2i(-1,0), "max_range": 1, "type": "step"},
+				{"direction": Vector2i(0,1), "max_range": 1, "type": "step"},
+				{"direction": Vector2i(0,-1), "max_range": 1, "type": "step"}
+			]
 		"Bishop":
-			self.MoveDeltaXY = GenerateDiags(7)
-		_:
-			self.MoveDeltaXY = []  # default empty array for other pieces
-
-
-
-
-
-
+			move_instructions += [
+				{"direction": Vector2i(1,1), "max_range": 7, "type": "sliding"},
+				{"direction": Vector2i(1,-1), "max_range": 7, "type": "sliding"},
+				{"direction": Vector2i(-1,1), "max_range": 7, "type": "sliding"},
+				{"direction": Vector2i(-1,-1), "max_range": 7, "type": "sliding"}
+			]
+	print(move_instructions)
 
 # all of these need to consider obstructions, 
 # Diag(7) needs each diag to be checking every square for obstructions
@@ -237,18 +315,6 @@ func GenerateRings(max_range: int ) -> Array:
 		moves.append(Vector2i(-i, -i))   # Down-left
 	return moves
 
-#
-	## --- Parent to square ---
-	#if not GlobalInfo.AllSquares.has(square_input):
-		#push_error("Square not found: %s" % square_input)
-		#return
-	#var square = GlobalInfo.AllSquares[square_input]
-	#self.reparent(square)
-	#self.position = Vector2(GlobalInfo.TileXSize / 2, GlobalInfo.TileYSize / 2)
-	#
-	##print("Successfully bootstrapped %s for %s at %s" % [piece_input, faction_input, square_input])
-
-
 func load_assets():
 	PieceTextures = {
 		"Pawn": load("res://Chess-Assets/WPawn.svg"),
@@ -258,12 +324,7 @@ func load_assets():
 		"Queen": load("res://Chess-Assets/WQueen.svg"),
 		"King": load("res://Chess-Assets/WKing.svg")
 	}
-# Dictionary of factions and their colors
-var FactionColors := {
-	"White": {"primary": Color(1, 1, 1, 1), "secondary": Color(0.1, 0.1, 0.1, 1)},
-	"Black": {"primary": Color(0.1, 0.1, 0.1, 1), "secondary": Color(0.7, 0.7, 0.7, 1)},
-	"Skins": {"primary": Color(0.9, 0.7, 0.6, 1), "secondary": Color(0.6, 0.4, 0.3, 1)},
-	"Red": {"primary": Color(0.76, 0, 0, 1), "secondary": Color(0.1, 0.1, 0.1, 1)},
-	"Blue": {"primary": Color(0.103, 0.405, 1, 1), "secondary": Color(0.9, 0.9, 0.9, 1)}
-}
 	
+	
+func send_piece(Vector2i):
+	print("sending ", self, " to ",  )

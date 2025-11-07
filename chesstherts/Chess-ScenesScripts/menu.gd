@@ -11,10 +11,10 @@ extends Control
 @export var piece_scene: PackedScene # this points to piece.tscn
 
 # Each row is now an array of strings (piece names)
-@export var faction1row1: Array = ["Pawn", "Pawn", "Pawn", "Pawn", "Pawn", "Pawn", "Pawn", "Pawn"]
+@export var faction1row1: Array = ["Queen", "Queen", "Queen", "Queen", "Queen", "Queen", "Queen", "Queen"]
 @export var faction1row2: Array = ["Rook", "Knight", "Bishop", "Queen", "King", "Bishop", "Knight", "Rook"]
 
-@export var faction2row1: Array = ["Pawn", "Pawn", "Pawn", "Pawn", "Pawn", "Pawn", "Pawn", "Pawn"]
+@export var faction2row1: Array = ["Queen", "Queen", "Queen", "Queen", "Queen", "Queen", "Queen", "Queen"]
 @export var faction2row2: Array = ["Rook", "Knight", "Bishop", "Queen", "King", "Bishop", "Knight", "Rook"]
 
 func _enter_tree():

@@ -93,7 +93,7 @@ func _reset_color() -> void:
 	update_color()
 
 func _on_click():
-	print("Tile clicked (", xy, ") and assign_dark = " ,assign_dark,)
+	print("Tile clicked ", xy, "and  assign_dark = " , assign_dark,)
 	print(self.global_position)
 	if occupant == null:
 		skirmish.ClearSelection()
