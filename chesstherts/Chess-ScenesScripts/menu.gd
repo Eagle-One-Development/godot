@@ -7,6 +7,8 @@ extends Control
 @export var faction1: String = "Black"
 @export var faction2: String = "Blue"
 @onready var skirmish: Node = $Skirmish
+var turns_type: String = "skirmish" # "strict_turns" "dynamic_turns"
+
 
 @export var piece_scene: PackedScene # this points to piece.tscn
 
@@ -20,3 +22,11 @@ extends Control
 func _enter_tree():
 	var skirmish: Node = $Skirmish
 	skirmish.menu = self
+	if turns_type == "skirmish":
+		turns_type = "skirmish"
+	elif turns_type == "strict_turns":
+		turns_type = "strict_turns"
+	elif turns_type == "dynamic_turns":
+		turns_type = "dynamic_turns"
+	skirmish.turns_type = turns_type
+	#print("menu ", turns_type)

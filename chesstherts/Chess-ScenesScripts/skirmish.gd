@@ -25,7 +25,7 @@
 extends Node2D
 
 var menu: Node = null
-#	print(menu_instance.faction1row1)
+var turns_type: String = "skirmish" #strict_turns dynamic_turns
 	
 @export var piece_scene: PackedScene # this points to piece.tscn
 @export var tile_scene: PackedScene # this points to piece.tscn
@@ -96,7 +96,7 @@ class TileManager:
 			return coord_lookup[value]
 	
 		# Otherwise, invalid input
-		push_warning("get_info_of() expects a Vector2i or a Tile instance.")
+		#push_warning("get_info_of() expects a Vector2i or a Tile instance.")
 		return null
 # --- Full structured lookup (returns both) ---
 	func get_dict_of(value) -> Dictionary:
@@ -115,7 +115,7 @@ class TileManager:
 			info.coords = coord_lookup[value]
 			return info
 
-		push_warning("get_dict_of() expects a Vector2i or Tile instance.")
+		#push_warning("get_dict_of() expects a Vector2i or Tile instance.")
 		return info
 
 	func get_tile(x: int, y: int) -> Node:
@@ -158,7 +158,8 @@ func set_window_size() -> void:
 	if window:
 		window.size = Vector2i(width + ui_x, height)
 	else:
-		push_warning("No active window found to resize.")
+		print()
+		#push_warning("No active window found to resize.")
 	#print("all_tiles type:", typeof(all_tiles))
 	#print("first element type:", typeof(all_tiles[0]) if all_tile_manager.size() > 0 else "none")
 
@@ -175,7 +176,7 @@ func instantiate_pieces():
 
 func spawn_faction_row(row_offset: int, column: int, pieces: Array, faction: String) -> void:
 	if pieces.is_empty():
-		push_warning("No pieces to spawn for faction: " + faction)
+		#push_warning("No pieces to spawn for faction: " + faction)
 		return
 
 	var total_pieces: int = pieces.size()
@@ -185,18 +186,18 @@ func spawn_faction_row(row_offset: int, column: int, pieces: Array, faction: Str
 	for i in range(total_pieces):
 		var raw_piece = pieces[i]
 		if raw_piece == null or String(raw_piece).strip_edges() == "":
-			push_warning("Skipping invalid piece at index %d for faction %s" % [i, faction])
+			#push_warning("Skipping invalid piece at index %d for faction %s" % [i, faction])
 			continue
 
 		var piece_type: String = String(raw_piece)
 		var x: int = start_x + i
 		var tile := tile_manager.get_tile(x, row_offset)
 		if not tile:
-			push_warning("Tile not found at: ", x, row_offset)
+			#push_warning("Tile not found at: ", x, row_offset)
 			continue
 
 		tile.spawn_piece(piece_type, faction)
-		print("Spawned", piece_type, "for", faction, "at tile:", tile.name, "(x:", x, "y:", row_offset, ")")
+		#print("Spawned", piece_type, "for", faction, "at tile:", tile.name, "(x:", x, "y:", row_offset, ")")
 
 
 func _ready():
@@ -206,8 +207,11 @@ func _ready():
 		#tiles = TileManager.new()
 		tile_manager.setup_grid(tile_scene, self, columns, rows, tile_size)
 	else:
-		push_warning("Tile scene not assigned!")
-	skirmishui.init(self)  # give UI a reference to this Skirmish instance
+		print()
+		#push_warning("Tile scene not assigned!")
+	skirmishui.init(self, "skirmish")  # give UI a reference to this Skirmish instance
+	skirmishui.turns_type = turns_type
+	#print("skirmish ", turns_type)
 	set_window_size()
 	instantiate_pieces()
 
@@ -215,7 +219,7 @@ func _ready():
 func inherit_skirmish_data():
 	var parent = get_parent()
 	if not parent:
-		push_warning("No parent found for Skirmish!")
+		#push_warning("No parent found for Skirmish!")
 		return
 	# Only inherit if parent actually defines these exported variables
 	if "tile_scene" in parent:
@@ -245,10 +249,18 @@ func inherit_skirmish_data():
 #
 #var Turn = 0
 #var SavedNode = ""
+
+
+#func RandomizeColor(color: Color, percent: float) -> Color:
+	## percent = 0.05 means ±5% variation
+	#var r = clamp(color.r + randf_range(-percent, percent), 0.0, 1.0)
+	#var g = clamp(color.g + randf_range(-percent, percent), 0.0, 1.0)
+	#var b = clamp(color.b + randf_range(-percent, percent), 0.0, 1.0)
+	#return Color(r, g, b, color.a)
+	#
 signal selected_piece_changed(new_piece)
 
 var _selected_piece: Node
-
 
 var SelectedPiece: Node:
 	set(value):
@@ -267,7 +279,7 @@ var SelectedPiece: Node:
 		if _selected_piece and _selected_piece.has_method("selected"):
 			_selected_piece.selected()
 
-		print("Selected Piece: ", _selected_piece)
+		#print("Selected Piece: ", _selected_piece)
 		emit_signal("selected_piece_changed", _selected_piece)
 	get:
 		return _selected_piece
@@ -278,18 +290,15 @@ func ClearSelection():
 	if _selected_piece and _selected_piece.has_method("deselected"):
 		_selected_piece.deselected()
 	_selected_piece = null
-	print("Selection cleared")
+	#print("Selection cleared")
 	emit_signal("selected_piece_changed", null)
-
-#func RandomizeColor(color: Color, percent: float) -> Color:
-	## percent = 0.05 means ±5% variation
-	#var r = clamp(color.r + randf_range(-percent, percent), 0.0, 1.0)
-	#var g = clamp(color.g + randf_range(-percent, percent), 0.0, 1.0)
-	#var b = clamp(color.b + randf_range(-percent, percent), 0.0, 1.0)
-	#return Color(r, g, b, color.a)
-	#
 	
-
+	
+func move_selected_piece(piece: Node):
+	print(piece, " is moving!")
+	piece.move()
+	
+	
 func _Randomize_Delete_Tiles():
 	print("trying to random delete")
 

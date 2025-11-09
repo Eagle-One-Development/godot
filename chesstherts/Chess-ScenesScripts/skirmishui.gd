@@ -6,11 +6,22 @@
 extends Control
 
 var skirmish: Node = null
-@export var ui_x: int = 800
+var turns_type: String = "skirmish"
+@export var ui_x: int = 264
 #@export var ui_y: int = 200
 
-func init(skirmish_ref: Node) -> void:
+
+@onready var Button1 = $SkirmishUi/Panel/VBoxContainer/Button1
+
+func init(skirmish_ref: Node, turns_type_ref: String) -> void:
 	skirmish = skirmish_ref
+	turns_type = turns_type_ref
+
+	if has_node("SkirmishUI/Panel/VboxContainer/Button1"):
+		var Button1 = $SkirmishUI/Panel/VboxContainer/Button1
+		Button1.text = turns_type_ref
+	else:
+		push_warning("skirmishui Button1 not found yet!")
 	#print(skirmish)
 
 	var layer := get_parent()
@@ -30,6 +41,12 @@ func init(skirmish_ref: Node) -> void:
 	var board_width: float = ((columns * tile_size) + (tile_size * 0.5))
 
 	layer.offset = Vector2(board_width, 0)
+
+
+#func _ready():
+	#Button1.text = turns_type
+	
+
 	
 	#var button1 = $SkirmishUILayer/SkirmishUI/Panel/VBoxContainer/Button1
 	#button1.pressed.connect(_on_button1_pressed)

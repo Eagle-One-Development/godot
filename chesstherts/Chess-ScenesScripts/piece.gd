@@ -49,9 +49,9 @@ func OnClick():
 	#print("OnClick: ", piece_type)
 	#print("OnClick: ", self.global_position)
 	#print("OnClick: PARENT ", parent_tile)
-	print("OnClick: MoveDeltaXY = " + str(MoveDeltaXY))
-	print(name, " is at location ", xy)
-	print("onclick highlight active", _highlight_active)
+	#print("OnClick: MoveDeltaXY = " + str(MoveDeltaXY))
+	#print(name, " is at location ", xy)
+	#print("onclick highlight active", _highlight_active)
 	#print("OnClick: SKIRMISH = ", skirmish)
 	#print("OnClick: TILEMANAGER = ", tile_manager)
 	#HighlightMoves()
@@ -66,7 +66,7 @@ func OnClick():
 func selected() -> void:
 	# Start highlight sequence
 	_highlight_active = true
-	print("_highlight_active = ", _highlight_active)
+	#print("_highlight_active = ", _highlight_active)
 
 	var reachable_tiles = get_reachable_tiles()
 	if not reachable_tiles:
@@ -116,7 +116,7 @@ func deselected() -> void:
 	for item in reachable_tiles:
 		item.tile._reset_color()
 
-	print("%s got unselected!" % name)
+	#print("%s got unselected!" % name)
 
 
 	
@@ -165,7 +165,7 @@ func _sort_by_distance(a, b):
 #
 func bootstrap(piece_input: String, tile_input: Vector2i, faction_input: String):
 	load_assets()
-	print("Bootstrapping %s for %s at %s" % [piece_input, faction_input, tile_input])
+	#print("Bootstrapping %s for %s at %s" % [piece_input, faction_input, tile_input])
 	#
 	## --- Populate instance variables ---
 	self.name = faction_input + piece_input
@@ -176,14 +176,14 @@ func bootstrap(piece_input: String, tile_input: Vector2i, faction_input: String)
 	
 	## --- Validate piece type ---
 	if not PieceTextures.has(piece_input):
-		push_error("Piece Type not found: %s" % piece_input)
+		#push_error("Piece Type not found: %s" % piece_input)
 		return
 	# --- Assign texture ---
 	var piece_texture: Texture2D = PieceTextures[piece_input]
 	if has_node("SpriteMain"):
 		$SpriteMain.texture = piece_texture
 	else:
-		push_warning("SpriteMain not found; applying texture to root node")
+		#push_warning("SpriteMain not found; applying texture to root node")
 		self.texture = piece_texture
 	#print("Bootstrap: %s texture assigned!" % piece_input)
 	
@@ -200,20 +200,22 @@ func bootstrap(piece_input: String, tile_input: Vector2i, faction_input: String)
 		$SpriteAccents.modulate = color_secondary
 		color_secondary = color_secondary
 	else:
-		push_warning("SpriteAccents not found; secondary color skipped")
+		print()
+		#push_warning("SpriteAccents not found; secondary color skipped")
 	
-	print("Bootstrap: %s colors applied!" % faction_input)
+	#print("Bootstrap: %s colors applied!" % faction_input)
 	#
 	
 	if has_node("SpriteAccents"):
 		$SpriteAccents.texture = piece_texture
 	else:
-		push_warning("SpriteAccents not found; applying texture to root node")
+		print()
+		#push_warning("SpriteAccents not found; applying texture to root node")
 	#print("Bootstrap: %s accent texture assigned!" % piece_input)
 
 	# --- Assign moves based on piece type ---
 	move_instructions.clear()
-	print("now adding move instructions")
+	#print("now adding move instructions")
 
 	match piece_type:
 		"Queen":
@@ -270,7 +272,7 @@ func bootstrap(piece_input: String, tile_input: Vector2i, faction_input: String)
 				{"direction": Vector2i(-1,1), "max_range": 7, "type": "sliding"},
 				{"direction": Vector2i(-1,-1), "max_range": 7, "type": "sliding"}
 			]
-	print(move_instructions)
+	#print(move_instructions)
 
 # all of these need to consider obstructions, 
 # Diag(7) needs each diag to be checking every square for obstructions
@@ -326,5 +328,5 @@ func load_assets():
 	}
 	
 	
-func send_piece(Vector2i):
+func move(Vector2i):
 	print("sending ", self, " to ",  )
