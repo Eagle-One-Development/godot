@@ -5,10 +5,10 @@
 # THE FKIN GOAT
 # LETS CODE THE FUCKING TILES YES GOD FUCK YES
 # HOW DOPE IT IS THAT TILES ARE SO SMART?
-
+@tool
 # T I L E #
 extends Node2D
-
+var turns_type: String = "skirmish"
 const OCTAGON_TEXTURE = preload("res://.godot/imported/octagon-64.png-969b76115dcf149304b27ac35f8b2ab5.ctex")
 
 @onready var background: Sprite2D = $Background
@@ -60,6 +60,7 @@ var playable: bool = true: # to set to true, you cant use the button, use the "a
 func _ready():
 	button.pressed.connect(_on_click)
 	update_color()
+	_set_board_color_pattern()
 
 
 func setup(x: int, y: int) -> void:
@@ -93,20 +94,22 @@ func _reset_color() -> void:
 	update_color()
 
 func _on_click():
-	print("Tile clicked ", xy, "and  assign_dark = " , assign_dark,)
-	print(self.global_position)
+	#print("Tile clicked ", xy, "and  assign_dark = " , assign_dark,)
+	#print(self.global_position)
 	if occupant == null:
 		skirmish.ClearSelection()
 	if occupant:
 		if occupant.has_method("OnClick"):
 			occupant.OnClick()  # call the piece's OnClick
 		else:
-			push_warning("Occupant has no OnClick method!")
+			print()
+			#push_warning("Occupant has no OnClick method!")
 	else:
-		print("No occupant on this tile")
+		print()
+		#print("No occupant on this tile")
 	var pawn = "King"
 	var black = "Black"
-	#spawn_piece(pawn, black)
+	spawn_piece(pawn, black)
 	#background.visible = true
 	#playable = false
 	#skirmish._Randomize_Delete_Tiles()
@@ -115,7 +118,7 @@ func _on_click():
 	
 func spawn_piece(piece_type: String, faction: String):
 	if occupant:
-		push_warning("Tile already has a piece! " + str(name))
+		#push_warning("Tile already has a piece! " + str(name))
 		return
 
 	# 1. Instantiate piece
@@ -126,7 +129,7 @@ func spawn_piece(piece_type: String, faction: String):
 
 	# 3. Place piece at tile’s global position
 	piece_instance.global_position = global_position
-	print("TILE MANAGER CHECK =", tile_manager)
+	#print("TILE MANAGER CHECK =", tile_manager)
 	# 4. Reference linking
 	piece_instance._parent_tile = self
 	piece_instance.skirmish = skirmish
@@ -139,9 +142,9 @@ func spawn_piece(piece_type: String, faction: String):
 	piece_instance.bootstrap(piece_type, xy, faction)
 
 	# 6. Debug info
-	print("Spawned piece ", piece_type, " for faction ", faction,
-		" on tile ", name,
-		" piece_global: ", piece_instance.global_position)
+	#print("Spawned piece ", piece_type, " for faction ", faction,
+		#" on tile ", name,
+		#" piece_global: ", piece_instance.global_position)
 
 
 func _highlight_for_faction(faction: String):
@@ -151,4 +154,4 @@ func _highlight_for_faction(faction: String):
 	var highlight_color := base_color * 0.7 if assign_dark else base_color
 	
 	background.modulate = highlight_color
-	print("Highlighting", xy, "for faction", faction, " (dark=", assign_dark, ")")
+	#print("Highlighting", xy, "for faction", faction, " (dark=", assign_dark, ")")
