@@ -1,31 +1,27 @@
 extends Node2D
 
-#
-#
-# piece
-## pieces texture are floating in top left of square... how to fix?
-#
-## Extra ablilities
-#var DoubleStart = true
-#var EnPassant = false
+
+# guidelines
+# never parented to tile? only parented to skirmish
+
+# PARENT KNOWLEDGE # PARENT KNOWLEDGE # PARENT KNOWLEDGE 
 var skirmish = null
-#
+
+#var _parent_tile: Node = null
+#var parent_tile: Node:
+	#get:
+		#return _parent_tile
+	#set(value):
+		#_parent_tile = value
+		#print("Piece parent_tile set to:", value)
+
+# SELF KNOWLEDGE # SELF KNOWLEDGE # SELF KNOWLEDGE 
 var faction: String = "Skin"
 var piece_type: String = "Pawn"
-#var tile: PackedStrng
 var xy: Vector2i = Vector2i(0, 0)
+var occupying: Node = null
 var _highlight_active: bool = false
 
-
-var _parent_tile: Node = null
-var parent_tile: Node:
-	get:
-		return _parent_tile
-	set(value):
-		_parent_tile = value
-		print("Piece parent_tile set to:", value)
-
-#
 var color_primary: Color = Color(1, 1, 1)
 var color_secondary: Color = Color(0.5, 0.5, 0.5)
 #
@@ -33,9 +29,8 @@ var color_secondary: Color = Color(0.5, 0.5, 0.5)
 var PieceTextures: Dictionary = {}
 var defense: int = 0
 
-var MoveDeltaXY: Array[Vector2i] = []
 var move_instructions = []  # default empty array for unknown pieces
-var highlighted_tiles: Array = []
+var tiles_for_move: Array = [] # all tiles for move (later expanded into attack and defend)
 var tile_manager
 
 
@@ -55,7 +50,7 @@ func OnClick():
 	#print("OnClick: SKIRMISH = ", skirmish)
 	#print("OnClick: TILEMANAGER = ", tile_manager)
 	#HighlightMoves()
-	skirmish.SelectedPiece = self
+	tile_manager.SelectedPiece = self
 
 
 
@@ -67,12 +62,14 @@ func selected() -> void:
 	# Start highlight sequence
 	_highlight_active = true
 	#print("_highlight_active = ", _highlight_active)
-
+	tile_manager.highlighted_tiles.clear()
 	var reachable_tiles = get_reachable_tiles()
 	if not reachable_tiles:
 		print("%s found no reachable tiles" % name)
 		return
 
+
+	# highlight animation
 	# Group tiles by distance
 	var waves := {}
 	for item in reachable_tiles:
@@ -103,6 +100,8 @@ func selected() -> void:
 
 		for tile in waves[sorted_distances[i]]:
 			tile._highlight_for_faction(faction)
+	print("tile_manager.highlighted_tiles = ", tile_manager.highlighted_tiles)
+
 
 
 
@@ -123,7 +122,6 @@ func deselected() -> void:
 	
 func get_reachable_tiles() -> Array:
 	var tiles_with_distance: Array = []
-
 	if not move_instructions:
 		push_warning("%s has no move instructions!" % name)
 		return tiles_with_distance
@@ -133,29 +131,31 @@ func get_reachable_tiles() -> Array:
 		var max_range: int = instr.max_range
 		var move_type: String = instr.type  # "sliding" or "step"
 
-		if move_type == "step":
+		if move_type == "step":     #"step over, no checks"
 			var target_xy = xy + direction
 			var target_tile = tile_manager.get_tile(target_xy.x, target_xy.y)
 			if target_tile and (not target_tile.occupant or target_tile.occupant.faction != faction):
 				var dist = (target_xy - xy).length()
 				tiles_with_distance.append({"distance": dist, "tile": target_tile})
+				tile_manager.highlighted_tiles.append(target_tile)
 
-		elif move_type == "sliding":
+		elif move_type == "sliding":    #"slide through, checks obstacles"
 			for i in range(1, max_range + 1):
 				var target_xy = xy + direction * i
 				var target_tile = tile_manager.get_tile(target_xy.x, target_xy.y)
 				if not target_tile:
 					break
+				if target_tile.playable == false:
+					break
 				if target_tile.occupant:
 					if target_tile.occupant.faction != faction:
 						var dist = (target_xy - xy).length()
 						tiles_with_distance.append({"distance": dist, "tile": target_tile})
-					break
-				if target_tile.playable == false:
+						tile_manager.highlighted_tiles.append(target_tile)
 					break
 				var dist = (target_xy - xy).length()
 				tiles_with_distance.append({"distance": dist, "tile": target_tile})
-
+				tile_manager.highlighted_tiles.append(target_tile)
 	# Sort closest first
 	tiles_with_distance.sort_custom(Callable(self, "_sort_by_distance"))
 	return tiles_with_distance
@@ -329,5 +329,18 @@ func load_assets():
 	}
 	
 	
-func move(Vector2i):
-	print("sending ", self, " to ",  )
+func move(target_xy):
+	print("MOVE REQUEST: ", self, " to ", target_xy)
+	#clear old information
+	occupying.occupant = null
+	occupying = null
+	tile_manager._reset_highlighted_tiles()
+	#populate new information
+	xy = target_xy.xy
+	target_xy.occupant = self
+	occupying = target_xy
+	position = target_xy.position
+	#deselected()
+	tile_manager.SelectedPiece = self
+	
+	#target_xy.add_child(self)

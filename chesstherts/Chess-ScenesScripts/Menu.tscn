@@ -20,11 +20,7 @@ layout_mode = 3
 anchors_preset = 0
 script = ExtResource("1_cjuck")
 tile_scene = ExtResource("2_csnck")
-columns = 30
-rows = 30
 tile_size = 70.0
-faction1 = "Red"
-faction2 = "Skins"
 piece_scene = ExtResource("4_518o2")
 
 [node name="Background" type="Sprite2D" parent="."]

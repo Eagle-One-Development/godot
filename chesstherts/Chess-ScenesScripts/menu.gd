@@ -7,6 +7,7 @@ extends Control
 @export var faction1: String = "Black"
 @export var faction2: String = "Blue"
 @onready var skirmish: Node = $Skirmish
+@onready var background: Node = $Background
 var turns_type: String = "skirmish" # "strict_turns" "dynamic_turns"
 
 

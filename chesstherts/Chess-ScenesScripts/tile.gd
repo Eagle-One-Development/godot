@@ -8,32 +8,36 @@
 @tool
 # T I L E #
 extends Node2D
-var turns_type: String = "skirmish"
-const OCTAGON_TEXTURE = preload("res://.godot/imported/octagon-64.png-969b76115dcf149304b27ac35f8b2ab5.ctex")
 
+# PARENT KNOWLEDGE # PARENT KNOWLEDGE # PARENT KNOWLEDGE # PARENT KNOWLEDGE 
+@onready var skirmish: Node = null
+var turns_type: String = "skirmish"
+var tile_manager
+
+# SELF KNOWLEDGE # SELF KNOWLEDGE # SELF KNOWLEDGE # SELF KNOWLEDGE 
+const OCTAGON_TEXTURE = preload("res://.godot/imported/octagon-64.png-969b76115dcf149304b27ac35f8b2ab5.ctex")
+@export var piece_scene: PackedScene # for spawning
 @onready var background: Sprite2D = $Background
 @onready var button: Button = $Button
-@onready var skirmish: Node = null
-@onready var occupant: Node = null
-@export var piece_scene: PackedScene
-
-var tile_manager
 var grid_x: int
 var grid_y: int
 var xy: Vector2i = Vector2i(0, 0)
-
-
 var assign_dark: bool = false
 var origin_color: Color = Color.WHITE # only set on spawn = base color + randomizations "reset here"
+
+var faction: String = "null"
+var factionpower: int = 0 # 0 - 100, upon reaching zero, it will set faction to null
+
+# CHILD KNOWLEDGE # CHILD KNOWLEDGE # CHILD KNOWLEDGE # CHILD KNOWLEDGE 
+@onready var occupant: Node = null
+
+
 
 var color: Color = Color.WHITE: # all color changes go to here
 	set(value):
 		color = value
 		update_color()
 
-
-var faction: String = "null"
-var factionpower: int = 0 # 0 - 100, upon reaching zero, it will set faction to null
 
 var playable: bool = true: # to set to true, you cant use the button, use the "all_tiles" array
 	set(value):
@@ -46,16 +50,10 @@ var playable: bool = true: # to set to true, you cant use the button, use the "a
 				background.texture = null
 			else:
 				background.texture = load("res://.godot/imported/octagon-64.png-969b76115dcf149304b27ac35f8b2ab5.ctex")
-		#if skirmish:
-			#if value == false:
-				#skirmish.all_tiles.remove_at(self)
-			#else:
-				#skirmish.all_tiles.append(self)
-				# disable pieces on the square? instagib?
 	get:
 		return playable
-	
 
+signal clicked_tile(tile)
 
 func _ready():
 	button.pressed.connect(_on_click)
@@ -94,26 +92,16 @@ func _reset_color() -> void:
 	update_color()
 
 func _on_click():
-	#print("Tile clicked ", xy, "and  assign_dark = " , assign_dark,)
-	#print(self.global_position)
-	if occupant == null:
-		skirmish.ClearSelection()
-	if occupant:
-		if occupant.has_method("OnClick"):
-			occupant.OnClick()  # call the piece's OnClick
-		else:
-			print()
-			#push_warning("Occupant has no OnClick method!")
-	else:
-		print()
-		#print("No occupant on this tile")
+	emit_signal("clicked_tile", self)
+	#print("occupant = ", occupant)
 	var pawn = "King"
 	var black = "Black"
-	spawn_piece(pawn, black)
+	#spawn_piece(pawn, black)
 	#background.visible = true
 	#playable = false
 	#skirmish._Randomize_Delete_Tiles()
 	#spawnpiece()
+	print("tile on click xy = ", xy)
 	
 	
 func spawn_piece(piece_type: String, faction: String):
@@ -131,10 +119,10 @@ func spawn_piece(piece_type: String, faction: String):
 	piece_instance.global_position = global_position
 	#print("TILE MANAGER CHECK =", tile_manager)
 	# 4. Reference linking
-	piece_instance._parent_tile = self
+	#piece_instance._parent_tile = self
 	piece_instance.skirmish = skirmish
 	piece_instance.tile_manager = tile_manager
-	piece_instance.xy = self.xy
+	piece_instance.occupying = self
 	#print("tile manager reference = ", tile_manager)
 	occupant = piece_instance
 
@@ -146,12 +134,34 @@ func spawn_piece(piece_type: String, faction: String):
 		#" on tile ", name,
 		#" piece_global: ", piece_instance.global_position)
 
+var _flashing = false  # prevent overlapping flashes
 
 func _highlight_for_faction(faction: String):
 	var base_color := FactionManager.get_color(faction, "primary")
-	
-	# Light tiles = base faction color, Dark tiles = darker version
 	var highlight_color := base_color * 0.7 if assign_dark else base_color
-	
+
 	background.modulate = highlight_color
-	#print("Highlighting", xy, "for faction", faction, " (dark=", assign_dark, ")")
+	
+	if occupant and occupant.faction != faction:
+		if not _flashing:
+			_flash_highlight(faction)
+
+
+func _flash_highlight(faction: String) -> void:
+	_flashing = true
+	var flicker_times := 100
+	var wait_time := 0.07  # seconds per flicker
+
+	for i in range(flicker_times):
+		if _flashing == false:
+			_reset_color()
+			break
+		_reset_color()
+		await get_tree().create_timer(wait_time).timeout
+		
+		var base_color := FactionManager.get_color(faction, "primary")
+		var highlight_color := base_color * 0.7 if assign_dark else base_color
+		background.modulate = highlight_color
+		await get_tree().create_timer(wait_time).timeout
+	
+	_flashing = false
