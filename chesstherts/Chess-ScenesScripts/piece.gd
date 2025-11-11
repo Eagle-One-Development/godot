@@ -100,7 +100,7 @@ func selected() -> void:
 
 		for tile in waves[sorted_distances[i]]:
 			tile._highlight_for_faction(faction)
-	print("tile_manager.highlighted_tiles = ", tile_manager.highlighted_tiles)
+	#print("tile_manager.highlighted_tiles = ", tile_manager.highlighted_tiles)
 
 
 
@@ -114,6 +114,7 @@ func deselected() -> void:
 	var reachable_tiles = get_reachable_tiles()
 	for item in reachable_tiles:
 		item.tile._reset_color()
+		item.tile._flashing = false
 
 	#print("%s got unselected!" % name)
 
@@ -273,6 +274,13 @@ func bootstrap(piece_input: String, tile_input: Vector2i, faction_input: String)
 				{"direction": Vector2i(-1,1), "max_range": 7, "type": "sliding"},
 				{"direction": Vector2i(-1,-1), "max_range": 7, "type": "sliding"}
 			]
+		"BigBoy":
+			move_instructions += [
+				{"direction": Vector2i(1,1), "max_range": 7, "type": "sliding"},
+				{"direction": Vector2i(1,-1), "max_range": 7, "type": "sliding"},
+				{"direction": Vector2i(-1,1), "max_range": 7, "type": "sliding"},
+				{"direction": Vector2i(-1,-1), "max_range": 7, "type": "sliding"}
+			]
 	#print(move_instructions)
 
 # all of these need to consider obstructions, 
@@ -325,7 +333,8 @@ func load_assets():
 		"Bishop": load("res://Chess-Assets/WBishop.svg"),
 		"Rook": load("res://Chess-Assets/WRook.svg"),
 		"Queen": load("res://Chess-Assets/WQueen.svg"),
-		"King": load("res://Chess-Assets/WKing.svg")
+		"King": load("res://Chess-Assets/WKing.svg"),
+		"BigBoy": load("res://Chess-Assets/WKing.svg"),
 	}
 	
 	

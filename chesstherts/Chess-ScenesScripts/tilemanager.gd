@@ -102,17 +102,17 @@ var SelectedPiece: Node:
 	set(value):
 		# Case 1: clicking same piece again = deselect
 		if _selected_piece == value:
-			print("double clicked ", _selected_piece, " so we deselect")
+			#print("double clicked ", _selected_piece, " so we deselect")
 			ClearSelection()
 			return
 
 		# Case 2: another piece is already selected → deselect it first
 		if _selected_piece and _selected_piece.has_method("deselected"):
-			print("currently selected ", _selected_piece, " is deselected for new selection:")
+			#print("currently selected ", _selected_piece, " is deselected for new selection:")
 			_selected_piece.deselected()
 
 		# Case 3: set the new selection
-		print("selected ", value)
+		#print("selected ", value)
 		_selected_piece = value
 		
 		if _selected_piece and _selected_piece.has_method("selected"):
@@ -136,7 +136,7 @@ func ClearSelection():
 #do we select? do we clear select? 
 #do we selectedpiece.move?
 func _on_tile_clicked(tile) -> void:
-	if tile in highlighted_tiles: #and tile.occupant == null
+	if tile in highlighted_tiles and SelectedPiece: #and tile.occupant == null
 		SelectedPiece.move(tile)
 	
 	
