@@ -43,7 +43,7 @@ var coord_lookup: Dictionary = {}        # key: tile, value: Vector2i(x, y)
 
 var highlighted_tiles: Array = []  # 2D array: tiles[x][y]
 
-@onready var skirmishui = $SkirmishUILayer/SkirmishUI
+@onready var skirmishui = $SkirmishUILayer/SkirmishUi
 
 
 
@@ -136,18 +136,6 @@ class TileManager:
 			tile.queue_free()
 
 
-#func load_assets():
-		## Hardcoded texture paths
-	#PieceTextures = {
-		#"Pawn": load("res://Chess-Assets/WPawn.svg"),
-		#"Knight": load("res://Chess-Assets/WKnight.svg"),
-		#"Bishop": load("res://Chess-Assets/WBishop.svg"),
-		#"Rook": load("res://Chess-Assets/WRook.svg"),
-		#"Queen": load("res://Chess-Assets/WQueen.svg"),
-		#"King": load("res://Chess-Assets/WKing.svg")
-	#}
-
-
 func set_window_size() -> void:
 	var width = int(columns * tile_size)
 	var height = int(rows * tile_size)
@@ -159,10 +147,6 @@ func set_window_size() -> void:
 		window.size = Vector2i(width + ui_x, height)
 	else:
 		print()
-		#push_warning("No active window found to resize.")
-	#print("all_tiles type:", typeof(all_tiles))
-	#print("first element type:", typeof(all_tiles[0]) if all_tile_manager.size() > 0 else "none")
-
 
 func instantiate_pieces():
 	var board_center := Vector2(columns * 0.5, rows * 0.5)
@@ -231,33 +215,7 @@ func inherit_skirmish_data():
 	if "tile_size" in parent:
 		tile_size = parent.tile_size
 
-#
-	#var target_color = FactionColors.get(faction, {}).get("primary", Color(1,1,1))
-	#var highlight = tile.get_node("Highlight")
-	#if not highlight:
-		#print("failed to find Highlight overlay")
-		#return
-#
-	## Fade overlay alpha to 1 with tween
-	#var tween = get_tree().create_tween()
-	#tween.tween_property(highlight, "color", Color(target_color.r, target_color.g, target_color.b, 1), 0.25)
-#
-	#if not highlighted_tile_manager.has(tile):
-		#highlighted_tile_manager.append(tile)
-		#print("added a Highlight to ", tile)
 
-#
-#var Turn = 0
-#var SavedNode = ""
-
-
-#func RandomizeColor(color: Color, percent: float) -> Color:
-	## percent = 0.05 means ±5% variation
-	#var r = clamp(color.r + randf_range(-percent, percent), 0.0, 1.0)
-	#var g = clamp(color.g + randf_range(-percent, percent), 0.0, 1.0)
-	#var b = clamp(color.b + randf_range(-percent, percent), 0.0, 1.0)
-	#return Color(r, g, b, color.a)
-	#
 signal selected_piece_changed(new_piece)
 
 var _selected_piece: Node
@@ -315,6 +273,4 @@ func _Randomize_Delete_Tiles():
 	print("Randomly disabled tile at:", random_coords, "|", random_tile)
 
 	random_tile.playable = false
-
-	# Optional: remove the tile entirely from the grid
-	# tile_manager.remove_tile(random_tile)
+	

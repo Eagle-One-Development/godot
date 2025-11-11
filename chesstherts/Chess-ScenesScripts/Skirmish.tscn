@@ -2,8 +2,8 @@
 
 [ext_resource type="Script" uid="uid://b6v0lswloevvm" path="res://Chess-ScenesScripts/skirmish.gd" id="1_01n61"]
 [ext_resource type="PackedScene" uid="uid://d0psr0sl4ojl0" path="res://Chess-ScenesScripts/Piece.tscn" id="2_pqef6"]
-[ext_resource type="Script" uid="uid://bnsf7k8sirpkr" path="res://Chess-ScenesScripts/skirmishui.gd" id="2_u7ioo"]
 [ext_resource type="PackedScene" uid="uid://cofcl2tkqpy18" path="res://Chess-ScenesScripts/Tile.tscn" id="3_megpe"]
+[ext_resource type="PackedScene" uid="uid://bn3yq4usikllx" path="res://Chess-ScenesScripts/SkirmishUI.tscn" id="4_megpe"]
 
 [node name="Skirmish" type="Node2D"]
 script = ExtResource("1_01n61")
@@ -14,32 +14,4 @@ tile_scene = ExtResource("3_megpe")
 scale = Vector2(2, 2)
 transform = Transform2D(2, 0, 0, 2, 0, 0)
 
-[node name="SkirmishUI" type="Control" parent="SkirmishUILayer"]
-layout_mode = 3
-anchors_preset = 0
-offset_right = 40.0
-offset_bottom = 40.0
-script = ExtResource("2_u7ioo")
-
-[node name="Panel" type="Panel" parent="SkirmishUILayer/SkirmishUI"]
-layout_mode = 0
-offset_right = 101.0
-offset_bottom = 112.0
-
-[node name="VBoxContainer" type="VBoxContainer" parent="SkirmishUILayer/SkirmishUI/Panel"]
-layout_mode = 0
-offset_right = 87.0
-offset_bottom = 70.0
-alignment = 1
-
-[node name="Label" type="Label" parent="SkirmishUILayer/SkirmishUI/Panel/VBoxContainer"]
-layout_mode = 2
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="Button1" type="Button" parent="SkirmishUILayer/SkirmishUI/Panel/VBoxContainer"]
-layout_mode = 2
-text = "TEXT ETXT"
-
-[node name="Button2" type="Button" parent="SkirmishUILayer/SkirmishUI/Panel/VBoxContainer"]
-layout_mode = 2
+[node name="SkirmishUi" parent="SkirmishUILayer" instance=ExtResource("4_megpe")]

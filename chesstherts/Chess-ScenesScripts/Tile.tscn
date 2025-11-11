@@ -24,6 +24,7 @@ script = ExtResource("1_3n7tw")
 piece_scene = ExtResource("2_7jqk1")
 
 [node name="Background" type="Sprite2D" parent="."]
+modulate = Color(0.85, 0.85, 0.85, 1)
 material = SubResource("ShaderMaterial_3n7tw")
 texture = ExtResource("1_j46gs")
 

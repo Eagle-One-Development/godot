@@ -151,6 +151,8 @@ func get_reachable_tiles() -> Array:
 						var dist = (target_xy - xy).length()
 						tiles_with_distance.append({"distance": dist, "tile": target_tile})
 					break
+				if target_tile.playable == false:
+					break
 				var dist = (target_xy - xy).length()
 				tiles_with_distance.append({"distance": dist, "tile": target_tile})
 
@@ -203,8 +205,7 @@ func bootstrap(piece_input: String, tile_input: Vector2i, faction_input: String)
 		print()
 		#push_warning("SpriteAccents not found; secondary color skipped")
 	
-	#print("Bootstrap: %s colors applied!" % faction_input)
-	#
+
 	
 	if has_node("SpriteAccents"):
 		$SpriteAccents.texture = piece_texture
@@ -276,46 +277,46 @@ func bootstrap(piece_input: String, tile_input: Vector2i, faction_input: String)
 
 # all of these need to consider obstructions, 
 # Diag(7) needs each diag to be checking every square for obstructions
-
-func GenerateKnight():
-	var moves: Array[Vector2i] = [
-	Vector2i(2, 1),
-	Vector2i(1, 2),
-	Vector2i(-1, 2),
-	Vector2i(-1, -2),
-	Vector2i(-2, 1),
-	Vector2i(-2, -1),
-	Vector2i(1, -2),
-	Vector2i(2, -1)
-	]
-	return moves
-
-func GenerateDiags(max_range: int ) -> Array:
-	var moves: Array[Vector2i] = []
-	for i in range(1, max_range + 1):
-		moves.append(Vector2i(i, i))     # Up-right
-		moves.append(Vector2i(-i, i))    # Up-left
-		moves.append(Vector2i(i, -i))    # Down-right
-		moves.append(Vector2i(-i, -i))   # Down-left
-	return moves
-	
-func GenerateAxis(max_range: int ) -> Array:
-	var moves: Array[Vector2i] = []
-	for i in range(1, max_range + 1):
-		moves.append(Vector2i(i, 0))     # to right
-		moves.append(Vector2i(-i, 0))     # to left
-		moves.append(Vector2i(0, i))     # to up
-		moves.append(Vector2i(0, -i))     # to down
-	return moves
-	
-func GenerateRings(max_range: int ) -> Array:
-	var moves: Array[Vector2i] = []
-	for i in range(1, max_range + 1):
-		moves.append(Vector2i(i, i))     # Up-right
-		moves.append(Vector2i(-i, i))    # Up-left
-		moves.append(Vector2i(i, -i))    # Down-right
-		moves.append(Vector2i(-i, -i))   # Down-left
-	return moves
+#
+#func GenerateKnight():
+	#var moves: Array[Vector2i] = [
+	#Vector2i(2, 1),
+	#Vector2i(1, 2),
+	#Vector2i(-1, 2),
+	#Vector2i(-1, -2),
+	#Vector2i(-2, 1),
+	#Vector2i(-2, -1),
+	#Vector2i(1, -2),
+	#Vector2i(2, -1)
+	#]
+	#return moves
+#
+#func GenerateDiags(max_range: int ) -> Array:
+	#var moves: Array[Vector2i] = []
+	#for i in range(1, max_range + 1):
+		#moves.append(Vector2i(i, i))     # Up-right
+		#moves.append(Vector2i(-i, i))    # Up-left
+		#moves.append(Vector2i(i, -i))    # Down-right
+		#moves.append(Vector2i(-i, -i))   # Down-left
+	#return moves
+	#
+#func GenerateAxis(max_range: int ) -> Array:
+	#var moves: Array[Vector2i] = []
+	#for i in range(1, max_range + 1):
+		#moves.append(Vector2i(i, 0))     # to right
+		#moves.append(Vector2i(-i, 0))     # to left
+		#moves.append(Vector2i(0, i))     # to up
+		#moves.append(Vector2i(0, -i))     # to down
+	#return moves
+	#
+#func GenerateRings(max_range: int ) -> Array:
+	#var moves: Array[Vector2i] = []
+	#for i in range(1, max_range + 1):
+		#moves.append(Vector2i(i, i))     # Up-right
+		#moves.append(Vector2i(-i, i))    # Up-left
+		#moves.append(Vector2i(i, -i))    # Down-right
+		#moves.append(Vector2i(-i, -i))   # Down-left
+	#return moves
 
 func load_assets():
 	PieceTextures = {
