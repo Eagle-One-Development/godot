@@ -157,5 +157,5 @@ func _on_tile_clicked(tile) -> void:
 func _reset_highlighted_tiles():
 	for tile in highlighted_tiles:
 		if is_instance_valid(tile):
-			tile._reset_color()
+			tile._ramp_to_color(tile.origin_color, 0.4)
 			tile._flashing = false

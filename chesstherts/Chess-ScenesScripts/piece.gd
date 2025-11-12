@@ -6,33 +6,37 @@ extends Node2D
 
 # PARENT KNOWLEDGE # PARENT KNOWLEDGE # PARENT KNOWLEDGE 
 var skirmish = null
-
-#var _parent_tile: Node = null
-#var parent_tile: Node:
-	#get:
-		#return _parent_tile
-	#set(value):
-		#_parent_tile = value
-		#print("Piece parent_tile set to:", value)
-
+var tile_manager
+var occupying: Node = null # tile scene obj
 # SELF KNOWLEDGE # SELF KNOWLEDGE # SELF KNOWLEDGE 
 var faction: String = "Skin"
 var piece_type: String = "Pawn"
-var xy: Vector2i = Vector2i(0, 0)
-var occupying: Node = null
-var _highlight_active: bool = false
-
-var color_primary: Color = Color(1, 1, 1)
-var color_secondary: Color = Color(0.5, 0.5, 0.5)
-#
-
 var PieceTextures: Dictionary = {}
+
+var xy: Vector2i = Vector2i(0, 0)
+
+var color_primary
+var color_secondary
 var defense: int = 0
+var _highlight_active: bool = false
+var _playable: bool = true
+var playable: bool:
+	get:
+		return _playable
+	set(value):
+		if _playable == value:
+			return
+		_playable = value
+		emit_signal("playable_changed", value)
+		if not value:
+			visible = false
 
-var move_instructions = []  # default empty array for unknown pieces
-var tiles_for_move: Array = [] # all tiles for move (later expanded into attack and defend)
-var tile_manager
 
+var defend_instructions = []  # defend = attack on a piece that just captured
+var attack_instructions = []
+var move_instructions = []
+# SIGNALS
+signal playable_changed(new_value: bool)
 
 
 func UpdateMobility(piece_input: String):
@@ -53,11 +57,6 @@ func OnClick():
 	tile_manager.SelectedPiece = self
 
 
-
-#func Selected() -> void:
-	#print(name, " got selected!")
-	#print("OnClick: TILEMANAGER = ", tile_manager)
-
 func selected() -> void:
 	# Start highlight sequence
 	_highlight_active = true
@@ -66,6 +65,9 @@ func selected() -> void:
 	var reachable_tiles = get_reachable_tiles()
 	if not reachable_tiles:
 		print("%s found no reachable tiles" % name)
+		# flicker the tile
+		self.occupying._flash_highlight(self.faction)
+		tile_manager.highlighted_tiles.append(self.occupying)
 		return
 
 
@@ -103,12 +105,10 @@ func selected() -> void:
 	#print("tile_manager.highlighted_tiles = ", tile_manager.highlighted_tiles)
 
 
-
-
-
 func deselected() -> void:
 	# Stop any ongoing highlight sequence
 	_highlight_active = false
+	self.occupying._reset_color()
 
 	# Reset highlighted tiles
 	var reachable_tiles = get_reachable_tiles()
@@ -116,11 +116,7 @@ func deselected() -> void:
 		item.tile._reset_color()
 		item.tile._flashing = false
 
-	#print("%s got unselected!" % name)
 
-
-	
-	
 func get_reachable_tiles() -> Array:
 	var tiles_with_distance: Array = []
 	if not move_instructions:
@@ -165,7 +161,7 @@ func get_reachable_tiles() -> Array:
 func _sort_by_distance(a, b):
 	return int(b.distance - a.distance)  # closest first
 
-#
+
 func bootstrap(piece_input: String, tile_input: Vector2i, faction_input: String):
 	load_assets()
 	#print("Bootstrapping %s for %s at %s" % [piece_input, faction_input, tile_input])
@@ -205,9 +201,7 @@ func bootstrap(piece_input: String, tile_input: Vector2i, faction_input: String)
 	else:
 		print()
 		#push_warning("SpriteAccents not found; secondary color skipped")
-	
 
-	
 	if has_node("SpriteAccents"):
 		$SpriteAccents.texture = piece_texture
 	else:
@@ -281,50 +275,7 @@ func bootstrap(piece_input: String, tile_input: Vector2i, faction_input: String)
 				{"direction": Vector2i(-1,1), "max_range": 7, "type": "sliding"},
 				{"direction": Vector2i(-1,-1), "max_range": 7, "type": "sliding"}
 			]
-	#print(move_instructions)
 
-# all of these need to consider obstructions, 
-# Diag(7) needs each diag to be checking every square for obstructions
-#
-#func GenerateKnight():
-	#var moves: Array[Vector2i] = [
-	#Vector2i(2, 1),
-	#Vector2i(1, 2),
-	#Vector2i(-1, 2),
-	#Vector2i(-1, -2),
-	#Vector2i(-2, 1),
-	#Vector2i(-2, -1),
-	#Vector2i(1, -2),
-	#Vector2i(2, -1)
-	#]
-	#return moves
-#
-#func GenerateDiags(max_range: int ) -> Array:
-	#var moves: Array[Vector2i] = []
-	#for i in range(1, max_range + 1):
-		#moves.append(Vector2i(i, i))     # Up-right
-		#moves.append(Vector2i(-i, i))    # Up-left
-		#moves.append(Vector2i(i, -i))    # Down-right
-		#moves.append(Vector2i(-i, -i))   # Down-left
-	#return moves
-	#
-#func GenerateAxis(max_range: int ) -> Array:
-	#var moves: Array[Vector2i] = []
-	#for i in range(1, max_range + 1):
-		#moves.append(Vector2i(i, 0))     # to right
-		#moves.append(Vector2i(-i, 0))     # to left
-		#moves.append(Vector2i(0, i))     # to up
-		#moves.append(Vector2i(0, -i))     # to down
-	#return moves
-	#
-#func GenerateRings(max_range: int ) -> Array:
-	#var moves: Array[Vector2i] = []
-	#for i in range(1, max_range + 1):
-		#moves.append(Vector2i(i, i))     # Up-right
-		#moves.append(Vector2i(-i, i))    # Up-left
-		#moves.append(Vector2i(i, -i))    # Down-right
-		#moves.append(Vector2i(-i, -i))   # Down-left
-	#return moves
 
 func load_assets():
 	PieceTextures = {
@@ -336,20 +287,42 @@ func load_assets():
 		"King": load("res://Chess-Assets/WKing.svg"),
 		"BigBoy": load("res://Chess-Assets/WKing.svg"),
 	}
-	
-	
+
+
 func move(target_xy):
 	print("MOVE REQUEST: ", self, " to ", target_xy)
+	depart_tile_occupation()
+	#insert move animation here
+	arrive_tile_occupation(target_xy)
+	#deselected()
+	tile_manager.SelectedPiece = self
+	
+
+func depart_tile_occupation():
 	#clear old information
 	occupying.occupant = null
 	occupying = null
 	tile_manager._reset_highlighted_tiles()
-	#populate new information
+	#print()
+
+func arrive_tile_occupation(target_xy):
+	if target_xy.occupant and target_xy.occupant.faction != self.faction:
+		print() # we attack!!
+		target_xy.occupant._is_captured()
+	# now begin ordinary move
+	# populate new information
+	# decision tree priority: Defend -> attack -> move
+	# defend is an attack + bonuses
+	# move is no attack
 	xy = target_xy.xy
 	target_xy.occupant = self
 	occupying = target_xy
 	position = target_xy.position
-	#deselected()
-	tile_manager.SelectedPiece = self
-	
-	#target_xy.add_child(self)
+	occupying._influence(faction)
+	#print()
+
+
+func _is_captured():
+	print("oh no ", self, " got captured!")
+	self.playable = false
+	#send to graveyard! in skirmishui!

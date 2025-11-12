@@ -37,6 +37,8 @@ var rows: int = 8
 var board_center := Vector2(columns * 0.5, rows * 0.5)
 var tile_size: float = 64
 
+var tile_color_dark
+var tile_color_light
 #var all_tiles_xy: Array = []  # 2D array: tiles[x][y]
 #var all_t: Dictionary = {}         # key: Vector2i(x, y), value: tile
 #var coord_lookup: Dictionary = {}        # key: tile, value: Vector2i(x, y)

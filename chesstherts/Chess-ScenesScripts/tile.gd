@@ -23,14 +23,25 @@ var grid_x: int
 var grid_y: int
 var xy: Vector2i = Vector2i(0, 0)
 var assign_dark: bool = false
-var origin_color: Color = Color.WHITE # only set on spawn = base color + randomizations "reset here"
 
-var faction: String = "null"
-var factionpower: int = 0 # 0 - 100, upon reaching zero, it will set faction to null
+var origin_color: Color           # only set by setup() / board pattern
+var target_color: Color = Color.WHITE
+var _color_tween: Tween
+
+var faction: String
+var _factionpower: int = 0
+var factionpower: int:
+	get:
+		return _factionpower
+	set(value):
+		_factionpower = clamp(value, 0, 4)  # keep in range
+		print("Faction power changed to:", _factionpower)
+
+		if _factionpower <= 0:
+			print("Faction power depleted! Clearing faction.")
 
 # CHILD KNOWLEDGE # CHILD KNOWLEDGE # CHILD KNOWLEDGE # CHILD KNOWLEDGE 
 @onready var occupant: Node = null
-
 
 
 var color: Color = Color.WHITE: # all color changes go to here
@@ -76,9 +87,33 @@ func _assign_dark_square() -> void:
 		
 		
 func _set_board_color_pattern() -> void:
-	var is_dark = ((xy.x + xy.y) % 2 == 1)
-	color = Color(0.4, 0.4, 0.4) if is_dark else Color(0.85, 0.85, 0.85)
-		
+	var light_color := Color(0.85, 0.85, 0.85)
+	var dark_color := Color(0.4, 0.4, 0.4)
+	var is_dark := ((xy.x + xy.y) % 2 == 1)
+
+	origin_color = dark_color if is_dark else light_color
+	_ramp_to_color(origin_color, 0.0)  # instantly set without tween
+
+
+func _ramp_to_color(new_color: Color, duration: float = 0) -> void:
+	if not background:
+		return
+
+	target_color = new_color
+	var current_color: Color = background.modulate
+
+	# If the color is already close enough, skip tween
+	if current_color.is_equal_approx(new_color):
+		return
+
+	# Stop any previous tween cleanly
+	if _color_tween and _color_tween.is_running():
+		_color_tween.kill()
+
+	_color_tween = create_tween()
+
+	# Tween from *current visible color* to the new color
+	_color_tween.tween_property(background, "modulate", new_color, duration)
 
 
 func update_color() -> void:
@@ -86,10 +121,10 @@ func update_color() -> void:
 		background.modulate = color
 		
 
-func _reset_color() -> void:
-	# Reset to base board color pattern
-	_set_board_color_pattern()
-	update_color()
+func _reset_color(duration: float = 0) -> void:
+	if origin_color:
+		_ramp_to_color(origin_color, duration)
+
 
 func _on_click():
 	emit_signal("clicked_tile", self)
@@ -140,7 +175,7 @@ func _highlight_for_faction(faction: String):
 	var base_color := FactionManager.get_color(faction, "primary")
 	var highlight_color := base_color * 0.7 if assign_dark else base_color
 
-	background.modulate = highlight_color
+	_ramp_to_color(highlight_color, 1)
 	
 	if occupant and occupant.faction != faction:
 		if not _flashing:
@@ -150,18 +185,32 @@ func _highlight_for_faction(faction: String):
 func _flash_highlight(faction: String) -> void:
 	_flashing = true
 	var flicker_times := 100
-	var wait_time := 0.07  # seconds per flicker
+	var wait_time := 0.16  # seconds per flicker
 
 	for i in range(flicker_times):
 		if _flashing == false:
-			_reset_color()
+			_reset_color(0.08)
 			break
 		_reset_color()
 		await get_tree().create_timer(wait_time).timeout
 		
 		var base_color := FactionManager.get_color(faction, "primary")
 		var highlight_color := base_color * 0.7 if assign_dark else base_color
-		background.modulate = highlight_color
+		_ramp_to_color(highlight_color, 0.05)
+		
 		await get_tree().create_timer(wait_time).timeout
 	
 	_flashing = false
+
+func _influence(occupant_faction):
+	if factionpower == 0:
+		faction = occupant_faction
+		factionpower = 1
+	if occupant_faction == faction:
+		factionpower += 1
+	else:
+		factionpower += -1
+	if factionpower == 0:
+		self.faction = occupant_faction
+		factionpower = 1
+	print()

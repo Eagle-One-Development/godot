@@ -2,11 +2,17 @@
 extends Node
 #class_name FactionManager
 
-#var all_skins_pieces: Array = []
-#var all_red_pieces: Array = []
-#var all_blue_pieces: Array = []
-#var all_black_pieces: Array = []
-#var all_white_pieces: Array = []
+var all_skins_pieces: Array = []
+var all_red_pieces: Array = []
+var all_blue_pieces: Array = []
+var all_black_pieces: Array = []
+var all_white_pieces: Array = []
+
+var captured_skins_pieces: Array = []
+var captured_red_pieces: Array = []
+var captured_blue_pieces: Array = []
+var captured_black_pieces: Array = []
+var captured_white_pieces: Array = []
 
 # Define immutable faction data
 const FACTIONS := {
