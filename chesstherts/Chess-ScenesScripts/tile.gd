@@ -172,6 +172,7 @@ func spawn_piece(piece_type: String, faction: String):
 var _flashing = false  # prevent overlapping flashes
 
 func _highlight_for_faction(faction: String):
+	#print("tile ", xy, " _highlight_for_faction ", faction)
 	var base_color := FactionManager.get_color(faction, "primary")
 	var highlight_color := base_color * 0.7 if assign_dark else base_color
 

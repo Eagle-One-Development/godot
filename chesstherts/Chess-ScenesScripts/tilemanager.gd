@@ -7,7 +7,37 @@ var coord_lookup: Dictionary = {}  # Tile scene → Vector2i
 var tile_size: float = 0.0
 var skirmish: Node = null
 
-var highlighted_tiles: Array = []  # shared highlight list
+var _highlighted_tiles: Array = []
+var highlighted_tiles: Array:
+	set(value):
+		#print("highlighted_tiles input = ", value)
+		# normalize input
+		if value == null:
+			value = []
+		elif typeof(value) != TYPE_ARRAY:
+			value = [value]
+
+		# tiles to remove (currently highlighted but not in new input)
+		for tile in _highlighted_tiles:
+			if is_instance_valid(tile) and not value.has(tile):
+				if tile.has_method("_reset_color"):
+					tile._reset_color()
+					tile._flashing = false
+
+		# tiles to add (in new input but not currently highlighted)
+		for tile in value:
+			if is_instance_valid(tile) and not _highlighted_tiles.has(tile):
+				if SelectedPiece and is_instance_valid(SelectedPiece):
+					if tile.has_method("_highlight_for_faction"):
+						tile._highlight_for_faction(SelectedPiece.faction)
+						#print("highlighted_tiles _highlight_for_faction = ", SelectedPiece.faction, " at ", tile)
+
+		# store new highlighted_tiles
+		_highlighted_tiles = value.duplicate()
+
+	get:
+		return _highlighted_tiles
+
 
 var faction1_row1_offset: Vector2i = Vector2i(0, 0)
 var faction2_row1_offset: Vector2i = Vector2i(0, 0)
@@ -102,17 +132,17 @@ var SelectedPiece: Node:
 	set(value):
 		# Case 1: clicking same piece again = deselect
 		if _selected_piece == value:
-			#print("double clicked ", _selected_piece, " so we deselect")
+			print("double clicked ", _selected_piece, " so we deselect")
 			ClearSelection()
 			return
 
 		# Case 2: another piece is already selected → deselect it first
 		if _selected_piece and _selected_piece.has_method("deselected"):
-			#print("currently selected ", _selected_piece, " is deselected for new selection:")
+			print("currently selected ", _selected_piece, " is deselected for new selection:")
 			_selected_piece.deselected()
 
 		# Case 3: set the new selection
-		#print("selected ", value)
+		print("selected ", value)
 		_selected_piece = value
 		
 		if _selected_piece and _selected_piece.has_method("selected"):
@@ -122,6 +152,7 @@ var SelectedPiece: Node:
 		emit_signal("selected_piece_changed", _selected_piece)
 	get:
 		return _selected_piece
+		#highlighted_tiles = SelectedPiece.get_reachable_tiles()
 	#print(highlighted_tiles)
 
 
@@ -129,6 +160,8 @@ func ClearSelection():
 	if _selected_piece and _selected_piece.has_method("deselected"):
 		_selected_piece.deselected()
 	_selected_piece = null
+	highlighted_tiles = []
+	print("CLEAR SELECTION TILES = ",highlighted_tiles)
 	#print("Selection cleared")
 	emit_signal("selected_piece_changed", null)
 
@@ -136,23 +169,20 @@ func ClearSelection():
 #do we select? do we clear select? 
 #do we selectedpiece.move?
 func _on_tile_clicked(tile) -> void:
-	if tile in highlighted_tiles and SelectedPiece: #and tile.occupant == null
+	if SelectedPiece and tile in highlighted_tiles:
+		# Move the piece to this tile
 		SelectedPiece.move(tile)
-	
-	
-	#print(highlighted_tiles)
-	#check if tile exists within highlighted_tiles
-	if tile.occupant == null:
-		ClearSelection()
-	if tile.occupant:
+	elif tile.occupant:
+		# Tile has a piece on it
 		if tile.occupant.has_method("OnClick"):
-			tile.occupant.OnClick()  # call the piece's OnClick
+			tile.occupant.OnClick()
 		else:
-			print()
-			#push_warning("Occupant has no OnClick method!")
+			print("Occupant has no OnClick method!")
 	else:
-		print()
-		#print("No occupant on this tile")
+		# Tile is empty and not a highlighted move
+		ClearSelection()
+		print("_on_tile_clicked is empty, cleared selection: ", tile)
+
 		
 func _reset_highlighted_tiles():
 	for tile in highlighted_tiles:

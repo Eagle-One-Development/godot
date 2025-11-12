@@ -60,49 +60,49 @@ func OnClick():
 func selected() -> void:
 	# Start highlight sequence
 	_highlight_active = true
-	#print("_highlight_active = ", _highlight_active)
-	tile_manager.highlighted_tiles.clear()
+	tile_manager.highlighted_tiles = get_reachable_tiles()
+
 	var reachable_tiles = get_reachable_tiles()
 	if not reachable_tiles:
 		print("%s found no reachable tiles" % name)
-		# flicker the tile
+		# if no reachable tiles, flicker self tile
 		self.occupying._flash_highlight(self.faction)
-		tile_manager.highlighted_tiles.append(self.occupying)
+		tile_manager.highlighted_tiles = [self.occupying]
 		return
 
-
-	# highlight animation
-	# Group tiles by distance
-	var waves := {}
-	for item in reachable_tiles:
-		var dist = item.distance
-		if not waves.has(dist):
-			waves[dist] = []
-		waves[dist].append(item.tile)
-
-	var sorted_distances = waves.keys()
-	sorted_distances.sort()  # closest first
-	# Timing
-	var total_time: float = 0.01
-	var first_delay: float = 0.01
-	var remaining_time: float = total_time - first_delay
-	var num_waves: int = sorted_distances.size()
-	var per_wave_delay: float = 0
-	if num_waves > 1:
-		per_wave_delay = remaining_time / (num_waves - 1)
-
-	# Highlight each wave
-	for i in range(num_waves):
-		# Wait for delay
-		await get_tree().create_timer(first_delay + per_wave_delay * i).timeout
-
-		# Stop if deselected
-		if not _highlight_active:
-			return
-
-		for tile in waves[sorted_distances[i]]:
-			tile._highlight_for_faction(faction)
-	#print("tile_manager.highlighted_tiles = ", tile_manager.highlighted_tiles)
+#
+	## highlight animation
+	## Group tiles by distance
+	#var waves := {}
+	#for item in reachable_tiles:
+		#var dist = item.distance
+		#if not waves.has(dist):
+			#waves[dist] = []
+		#waves[dist].append(item.tile)
+#
+	#var sorted_distances = waves.keys()
+	#sorted_distances.sort()  # closest first
+	## Timing
+	#var total_time: float = 0.01
+	#var first_delay: float = 0.01
+	#var remaining_time: float = total_time - first_delay
+	#var num_waves: int = sorted_distances.size()
+	#var per_wave_delay: float = 0
+	#if num_waves > 1:
+		#per_wave_delay = remaining_time / (num_waves - 1)
+#
+	## Highlight each wave
+	#for i in range(num_waves):
+		## Wait for delay
+		#await get_tree().create_timer(first_delay + per_wave_delay * i).timeout
+#
+		## Stop if deselected
+		#if not _highlight_active:
+			#return
+#
+		#for tile in waves[sorted_distances[i]]:
+			#tile._highlight_for_faction(faction)
+	##print("tile_manager.highlighted_tiles = ", tile_manager.highlighted_tiles)
 
 
 func deselected() -> void:
@@ -110,52 +110,44 @@ func deselected() -> void:
 	_highlight_active = false
 	self.occupying._reset_color()
 
-	# Reset highlighted tiles
-	var reachable_tiles = get_reachable_tiles()
-	for item in reachable_tiles:
-		item.tile._reset_color()
-		item.tile._flashing = false
+	## Reset highlighted tiles
+	#var reachable_tiles = get_reachable_tiles()
+	#for item in reachable_tiles:
+		#item.tile._reset_color()
+		#item.tile._flashing = false
 
 
 func get_reachable_tiles() -> Array:
-	var tiles_with_distance: Array = []
+	var reachable_tiles: Array = []
+
 	if not move_instructions:
 		push_warning("%s has no move instructions!" % name)
-		return tiles_with_distance
+		return reachable_tiles
 
 	for instr in move_instructions:
 		var direction: Vector2i = instr.direction
 		var max_range: int = instr.max_range
 		var move_type: String = instr.type  # "sliding" or "step"
 
-		if move_type == "step":     #"step over, no checks"
+		if move_type == "step":
 			var target_xy = xy + direction
 			var target_tile = tile_manager.get_tile(target_xy.x, target_xy.y)
 			if target_tile and (not target_tile.occupant or target_tile.occupant.faction != faction):
-				var dist = (target_xy - xy).length()
-				tiles_with_distance.append({"distance": dist, "tile": target_tile})
-				tile_manager.highlighted_tiles.append(target_tile)
+				reachable_tiles.append(target_tile)
 
-		elif move_type == "sliding":    #"slide through, checks obstacles"
+		elif move_type == "sliding":
 			for i in range(1, max_range + 1):
 				var target_xy = xy + direction * i
 				var target_tile = tile_manager.get_tile(target_xy.x, target_xy.y)
-				if not target_tile:
-					break
-				if target_tile.playable == false:
+				if not target_tile or target_tile.playable == false:
 					break
 				if target_tile.occupant:
 					if target_tile.occupant.faction != faction:
-						var dist = (target_xy - xy).length()
-						tiles_with_distance.append({"distance": dist, "tile": target_tile})
-						tile_manager.highlighted_tiles.append(target_tile)
+						reachable_tiles.append(target_tile)
 					break
-				var dist = (target_xy - xy).length()
-				tiles_with_distance.append({"distance": dist, "tile": target_tile})
-				tile_manager.highlighted_tiles.append(target_tile)
-	# Sort closest first
-	tiles_with_distance.sort_custom(Callable(self, "_sort_by_distance"))
-	return tiles_with_distance
+				reachable_tiles.append(target_tile)
+	return reachable_tiles
+
 
 
 func _sort_by_distance(a, b):
@@ -295,14 +287,14 @@ func move(target_xy):
 	#insert move animation here
 	arrive_tile_occupation(target_xy)
 	#deselected()
-	tile_manager.SelectedPiece = self
+	tile_manager.highlighted_tiles = get_reachable_tiles()
 	
 
 func depart_tile_occupation():
 	#clear old information
 	occupying.occupant = null
 	occupying = null
-	tile_manager._reset_highlighted_tiles()
+	#tile_manager._reset_highlighted_tiles()
 	#print()
 
 func arrive_tile_occupation(target_xy):
@@ -319,6 +311,7 @@ func arrive_tile_occupation(target_xy):
 	occupying = target_xy
 	position = target_xy.position
 	occupying._influence(faction)
+	tile_manager.highlighted_tiles = get_reachable_tiles()
 	#print()
 
 
