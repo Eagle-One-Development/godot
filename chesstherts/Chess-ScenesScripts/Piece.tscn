@@ -1,13 +1,17 @@
-[gd_scene load_steps=4 format=3 uid="uid://d0psr0sl4ojl0"]
+[gd_scene load_steps=5 format=3 uid="uid://d0psr0sl4ojl0"]
 
 [ext_resource type="Script" uid="uid://dsdsaorwepr3o" path="res://Chess-ScenesScripts/piece.gd" id="1_b1p01"]
 [ext_resource type="Texture2D" uid="uid://dit3skmyivexu" path="res://Chess-Assets/BKing.svg" id="2_3udtr"]
+[ext_resource type="Script" uid="uid://w72kdbc1pqcf" path="res://Chess-ScenesScripts/defense.gd" id="2_co32b"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_co32b"]
 
 [node name="Piece" type="Node2D"]
 top_level = true
 script = ExtResource("1_b1p01")
+
+[node name="Defense" type="Node2D" parent="."]
+script = ExtResource("2_co32b")
 
 [node name="SpriteAccents" type="Sprite2D" parent="."]
 material = SubResource("ShaderMaterial_co32b")

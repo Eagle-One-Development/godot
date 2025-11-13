@@ -17,7 +17,27 @@ var xy: Vector2i = Vector2i(0, 0)
 
 var color_primary
 var color_secondary
-var defense: int = 0
+
+@onready var defense_layer: Node2D = $Defense
+
+# Internal storage for defense
+# Internal storage + property with get/set
+var _defense: int = 1
+var defense: int:
+	get:
+		return _defense
+	set(value):
+		_defense = clamp(value, 0, 3)  # 0: none, 1: triangle, 2: square, 3: pentagon
+		print("Defense changed to:", _defense)
+
+		# Update the Defense layer if it exists
+		if is_instance_valid(defense_layer):
+			defense_layer.set_defense(_defense)
+			defense_layer.color_primary = color_primary
+			defense_layer.color_secondary = color_secondary
+			#defense_layer.update()
+
+
 var _highlight_active: bool = false
 var _playable: bool = true
 var playable: bool:
@@ -44,6 +64,7 @@ func UpdateMobility(piece_input: String):
 
 
 func OnClick():
+	print(self, "defense = ", defense)
 	#print("OnClick: ", faction)
 	#print("OnClick: ", piece_type)
 	#print("OnClick: ", self.global_position)
@@ -163,6 +184,11 @@ func bootstrap(piece_input: String, tile_input: Vector2i, faction_input: String)
 	self.faction = faction_input
 	self.piece_type = piece_input
 	self.xy = tile_input
+	if piece_input == "Queen":
+		defense = 3
+	occupying._influence(faction)
+	occupying._influence(faction)
+	occupying._influence(faction)
 	#self.global_position = parent_tile.global_position
 	
 	## --- Validate piece type ---
@@ -198,13 +224,16 @@ func bootstrap(piece_input: String, tile_input: Vector2i, faction_input: String)
 		$SpriteAccents.texture = piece_texture
 	else:
 		print()
+	if has_node("Defense"):
+		var defense_layer: Node2D = $Defense
+		defense = 1
+		print("defense node found!")
 		#push_warning("SpriteAccents not found; applying texture to root node")
 	#print("Bootstrap: %s accent texture assigned!" % piece_input)
 
 	# --- Assign moves based on piece type ---
 	move_instructions.clear()
 	#print("now adding move instructions")
-
 	match piece_type:
 		"Queen":
 			# 4 diagonal sliding + 4 axis sliding

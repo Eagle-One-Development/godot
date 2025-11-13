@@ -1,9 +1,10 @@
-[gd_scene load_steps=7 format=3 uid="uid://cofcl2tkqpy18"]
+[gd_scene load_steps=8 format=3 uid="uid://cofcl2tkqpy18"]
 
 [ext_resource type="Script" uid="uid://bx1yfs6nsocl8" path="res://Chess-ScenesScripts/tile.gd" id="1_3n7tw"]
 [ext_resource type="Texture2D" uid="uid://dagp6j1eneywj" path="res://Chess-Assets/octagon-64.png" id="1_j46gs"]
 [ext_resource type="PackedScene" uid="uid://d0psr0sl4ojl0" path="res://Chess-ScenesScripts/Piece.tscn" id="2_7jqk1"]
 [ext_resource type="Texture2D" uid="uid://dit3skmyivexu" path="res://Chess-Assets/BKing.svg" id="3_0q080"]
+[ext_resource type="Texture2D" uid="uid://cy6oq48drbadh" path="res://Chess-Assets/square-64.png" id="4_tcce4"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_3n7tw"]
 
@@ -23,9 +24,22 @@ cache/0/20/0/scale = 1.0
 script = ExtResource("1_3n7tw")
 piece_scene = ExtResource("2_7jqk1")
 
+[node name="FactionPower" type="Sprite2D" parent="."]
+visible = false
+modulate = Color(0.85, 0.85, 0.85, 1)
+show_behind_parent = true
+material = SubResource("ShaderMaterial_3n7tw")
+scale = Vector2(0.55, 0.55)
+texture = ExtResource("4_tcce4")
+
 [node name="Background" type="Sprite2D" parent="."]
 modulate = Color(0.85, 0.85, 0.85, 1)
 material = SubResource("ShaderMaterial_3n7tw")
+texture = ExtResource("1_j46gs")
+
+[node name="Highlight" type="Sprite2D" parent="."]
+material = SubResource("ShaderMaterial_3n7tw")
+scale = Vector2(0.66, 0.66)
 texture = ExtResource("1_j46gs")
 
 [node name="Button" type="Button" parent="."]
