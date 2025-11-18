@@ -2,41 +2,50 @@
 extends Node
 class_name TileManager
 
+var tile_light_color: Color
+var tile_dark_color: Color
+var tile_light_color2: Color
+var tile_dark_color2: Color
+var tile_light_color_randomization: float
+var tile_dark_color_randomization: float
+var faction1
+var faction2
+
 var tile_lookup: Dictionary = {}   # Vector2i → Tile scene
 var coord_lookup: Dictionary = {}  # Tile scene → Vector2i
 var tile_size: float = 0.0
 var skirmish: Node = null
+var columns: int
+var rows: int
+
+var non_playable_tiles: Array = []
 
 var _highlighted_tiles: Array = []
 var highlighted_tiles: Array:
 	set(value):
-		#print("highlighted_tiles input = ", value)
-		# normalize input
 		if value == null:
 			value = []
 		elif typeof(value) != TYPE_ARRAY:
 			value = [value]
 
-		# tiles to remove (currently highlighted but not in new input)
+		# 1) Remove old tiles not in new highlight set
 		for tile in _highlighted_tiles:
 			if is_instance_valid(tile) and not value.has(tile):
-				if tile.has_method("_reset_color"):
-					tile._reset_color()
-					tile._flashing = false
+				tile.highlight_task = ""
+				tile._flashing = false
 
-		# tiles to add (in new input but not currently highlighted)
+		# 2) Update highlight for all new tiles (add or keep)
 		for tile in value:
-			if is_instance_valid(tile) and not _highlighted_tiles.has(tile):
+			if is_instance_valid(tile):
 				if SelectedPiece and is_instance_valid(SelectedPiece):
-					if tile.has_method("_highlight_for_faction"):
-						tile._highlight_for_faction(SelectedPiece.faction)
-						#print("highlighted_tiles _highlight_for_faction = ", SelectedPiece.faction, " at ", tile)
+					if tile.highlight_task != SelectedPiece.faction:
+						tile.highlight_task = SelectedPiece.faction
 
-		# store new highlighted_tiles
 		_highlighted_tiles = value.duplicate()
 
 	get:
 		return _highlighted_tiles
+
 
 
 var faction1_row1_offset: Vector2i = Vector2i(0, 0)
@@ -45,6 +54,7 @@ var faction2_row1_offset: Vector2i = Vector2i(0, 0)
 
 func setup_grid(tile_scene: PackedScene, parent: Node, cols: int, rows: int, _tile_size: float):
 	clear()
+	print("setup grid: ", tile_light_color, tile_dark_color)
 	skirmish = parent
 	tile_size = _tile_size
 	var offset = tile_size / 2
@@ -55,14 +65,27 @@ func setup_grid(tile_scene: PackedScene, parent: Node, cols: int, rows: int, _ti
 			parent.add_child(tile)
 			tile.skirmish = parent
 			tile.position = Vector2(x * tile_size + offset, y * tile_size + offset)
-			tile.tile_manager = self
-			tile.connect("clicked_tile", Callable(self, "_on_tile_clicked"))
+			give_tile_global_info(tile)
 			tile.setup(x + 1, y + 1)
-
+			
 			var coords = Vector2i(x + 1, y + 1)
 			#tile.xy = coords
 			tile_lookup[coords] = tile
 			coord_lookup[tile] = coords
+
+
+func give_tile_global_info(tile):
+	# this is info not related to position of itself
+	tile.tile_manager = self
+	tile.tile_light_color = tile_light_color
+	tile.tile_dark_color = tile_dark_color
+	tile.tile_light_color2 = tile_light_color2
+	tile.tile_dark_color2 = tile_dark_color2
+	tile.tile_light_color_randomization =tile_light_color_randomization
+	tile.tile_dark_color_randomization = tile_dark_color_randomization
+	tile.faction1 = faction1
+	tile.faction2 = faction2
+	tile.connect("clicked_tile", Callable(self, "_on_tile_clicked"))
 
 
 func clear():
@@ -135,6 +158,9 @@ var SelectedPiece: Node:
 			print("double clicked ", _selected_piece, " so we deselect")
 			ClearSelection()
 			return
+		if value == null:
+			highlighted_tiles = []
+			print("selected piece change factions = erase highlighttiles")
 
 		# Case 2: another piece is already selected → deselect it first
 		if _selected_piece and _selected_piece.has_method("deselected"):
@@ -152,8 +178,6 @@ var SelectedPiece: Node:
 		emit_signal("selected_piece_changed", _selected_piece)
 	get:
 		return _selected_piece
-		#highlighted_tiles = SelectedPiece.get_reachable_tiles()
-	#print(highlighted_tiles)
 
 
 func ClearSelection():
@@ -187,5 +211,5 @@ func _on_tile_clicked(tile) -> void:
 func _reset_highlighted_tiles():
 	for tile in highlighted_tiles:
 		if is_instance_valid(tile):
-			tile._ramp_to_color(tile.origin_color, 0.4)
+			tile._highlight_ramp_to_faction_colors(tile.origin_color, 0.4)
 			tile._flashing = false

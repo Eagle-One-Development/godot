@@ -23,8 +23,12 @@ tile_scene = ExtResource("2_csnck")
 columns = 12
 rows = 14
 tile_size = 70.0
-faction1 = "Blue"
-faction2 = "Skins"
+tile_light_color = Color(0.91607, 0.731618, 0.329225, 1)
+tile_dark_color = Color(0.372745, 0.258717, 0.0729582, 1)
+tile_light_color_randomization = 0.2
+tile_dark_color_randomization = 0.2
+faction1 = "Skins"
+faction2 = "Red"
 piece_scene = ExtResource("4_518o2")
 
 [node name="Background" type="Sprite2D" parent="."]

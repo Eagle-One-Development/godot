@@ -16,7 +16,7 @@ script = ExtResource("2_co32b")
 [node name="SpriteAccents" type="Sprite2D" parent="."]
 material = SubResource("ShaderMaterial_co32b")
 position = Vector2(0, -2)
-scale = Vector2(1.6, 1.6)
+scale = Vector2(1.4, 1.4)
 texture = ExtResource("2_3udtr")
 
 [node name="SpriteMain" type="Sprite2D" parent="."]

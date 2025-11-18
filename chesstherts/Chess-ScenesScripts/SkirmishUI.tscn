@@ -5,8 +5,8 @@
 
 [sub_resource type="InputEventKey" id="InputEventKey_7y7ds"]
 device = -1
-keycode = 80
-unicode = 112
+keycode = 32
+unicode = 32
 
 [sub_resource type="Shortcut" id="Shortcut_66ry5"]
 events = [SubResource("InputEventKey_7y7ds")]
@@ -16,22 +16,60 @@ layout_mode = 3
 anchors_preset = 0
 script = ExtResource("1_ptls4")
 
-[node name="Panel" type="Panel" parent="."]
+[node name="Main" type="Panel" parent="."]
 layout_mode = 0
 offset_right = 109.0
 offset_bottom = 90.0
 
-[node name="Graveyard" type="Panel" parent="Panel"]
+[node name="Graveyard" type="Panel" parent="Main"]
+layout_mode = 0
+offset_top = 135.0
 offset_right = 109.0
-offset_bottom = 90.0
+offset_bottom = 256.0
 
-[node name="VBoxContainer" type="VBoxContainer" parent="Panel"]
+[node name="Button" type="Button" parent="Main/Graveyard"]
+layout_mode = 0
+offset_right = 109.0
+offset_bottom = 31.0
+text = "GRAVEYARD"
+
+[node name="Faction1GY" type="Panel" parent="Main/Graveyard"]
+layout_mode = 0
+offset_left = 6.0
+offset_top = 34.0
+offset_right = 102.0
+offset_bottom = 74.0
+
+[node name="Container" type="Container" parent="Main/Graveyard/Faction1GY"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Faction2GY" type="Panel" parent="Main/Graveyard"]
+clip_contents = true
+layout_mode = 0
+offset_left = 6.0
+offset_top = 77.0
+offset_right = 102.0
+offset_bottom = 117.0
+
+[node name="Container" type="Container" parent="Main/Graveyard/Faction2GY"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Main"]
 layout_mode = 0
 offset_right = 83.0
 offset_bottom = 31.0
 
-[node name="Button1" type="Button" parent="Panel/VBoxContainer"]
+[node name="Button2" type="Button" parent="Main/VBoxContainer"]
 layout_mode = 2
 action_mode = 0
 shortcut = SubResource("Shortcut_66ry5")
+script = ExtResource("2_7y7ds")
+
+[node name="Button1" type="Button" parent="Main/VBoxContainer"]
+layout_mode = 2
+action_mode = 0
 script = ExtResource("2_7y7ds")

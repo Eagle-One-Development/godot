@@ -24,23 +24,29 @@ cache/0/20/0/scale = 1.0
 script = ExtResource("1_3n7tw")
 piece_scene = ExtResource("2_7jqk1")
 
-[node name="FactionPower" type="Sprite2D" parent="."]
+[node name="Fortification" type="Sprite2D" parent="."]
 visible = false
 modulate = Color(0.85, 0.85, 0.85, 1)
 show_behind_parent = true
 material = SubResource("ShaderMaterial_3n7tw")
-scale = Vector2(0.55, 0.55)
-texture = ExtResource("4_tcce4")
+rotation = 0.392699
+scale = Vector2(1.15, 1.15)
+texture = ExtResource("1_j46gs")
 
 [node name="Background" type="Sprite2D" parent="."]
-modulate = Color(0.85, 0.85, 0.85, 1)
+modulate = Color(0, 0, 0, 1)
 material = SubResource("ShaderMaterial_3n7tw")
 texture = ExtResource("1_j46gs")
 
-[node name="Highlight" type="Sprite2D" parent="."]
+[node name="HighlightSecondary" type="Sprite2D" parent="."]
 material = SubResource("ShaderMaterial_3n7tw")
-scale = Vector2(0.66, 0.66)
-texture = ExtResource("1_j46gs")
+scale = Vector2(0.6889, 0.6889)
+texture = ExtResource("4_tcce4")
+
+[node name="HighlightPrimary" type="Sprite2D" parent="."]
+material = SubResource("ShaderMaterial_3n7tw")
+scale = Vector2(0.77, 0.77)
+texture = ExtResource("4_tcce4")
 
 [node name="Button" type="Button" parent="."]
 modulate = Color(0.273873, 0.273873, 0.273873, 1)

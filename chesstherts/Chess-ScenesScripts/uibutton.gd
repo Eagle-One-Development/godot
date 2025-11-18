@@ -3,5 +3,6 @@ extends Button
 @onready var skirmishui = $SkirmishUi
 
 func _ready():
-	print(skirmishui)
-	print("skirmishuiyay")
+	if get_parent() == $Graveyard:
+		print(skirmishui)
+		print("skirmishuiyay")

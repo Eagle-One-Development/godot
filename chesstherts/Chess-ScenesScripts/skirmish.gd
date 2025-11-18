@@ -22,31 +22,35 @@
 # this is UI = faction, timer, selected piece, resources, ability 1 2 3 , 
 # ends with a finish!
 
-
 # S K I R M I S H #
 extends Node2D
 
 # PARENT KNOWLEDGE # PARENT KNOWLEDGE # PARENT KNOWLEDGE 
 var menu: Node = null
 var turns_type: String = "skirmish" #strict_turns dynamic_turns
+@onready var tile_manager = TileManager.new()
+
+var tile_light_color: Color
+var tile_dark_color: Color
+var tile_light_color2: Color
+var tile_dark_color2: Color
+var tile_light_color_randomization: float
+var tile_dark_color_randomization: float
+var faction1
+var faction2
+var columns: int = 8
+var rows: int = 8
+var tile_size: float = 64
+
 # SELF KNOWLEDGE # SELF KNOWLEDGE # SELF KNOWLEDGE # SELF KNOWLEDGE 
 @export var piece_scene: PackedScene # this points to piece.tscn
 @export var tile_scene: PackedScene # this points to piece.tscn
-var columns: int = 8
-var rows: int = 8
+
 var board_center := Vector2(columns * 0.5, rows * 0.5)
-var tile_size: float = 64
 
-var tile_color_dark
-var tile_color_light
-#var all_tiles_xy: Array = []  # 2D array: tiles[x][y]
-#var all_t: Dictionary = {}         # key: Vector2i(x, y), value: tile
-#var coord_lookup: Dictionary = {}        # key: tile, value: Vector2i(x, y)
-#
-#var highlighted_tiles: Array = []  # 2D array: tiles[x][y]
 
+# CHILD KNOWLEDGE # CHILD KNOWLEDGE # CHILD KNOWLEDGE # CHILD KNOWLEDGE 
 @onready var skirmishui = $SkirmishUILayer/SkirmishUi
-@onready var tile_manager = TileManager.new()
 
 
 func set_window_size() -> void:
@@ -58,12 +62,13 @@ func set_window_size() -> void:
 	var window := get_window()
 	if window:
 		window.size = Vector2i(width + ui_x, height)
+#		window.scale = 2
 	else:
 		print()
 
 func skirmish_instantiate_pieces():
 	var board_center := Vector2(columns * 0.5, rows * 0.5 + 1)
-	print("skirmish_instantiate_pieces.board_center = ", board_center)
+	#print("skirmish_instantiate_pieces.board_center = ", board_center)
 
 	spawn_faction_row(board_center.y - 3, board_center.x, menu.faction1row1, menu.faction1)
 	spawn_faction_row(board_center.y - 4, board_center.x, menu.faction1row2, menu.faction1)
@@ -99,17 +104,25 @@ func spawn_faction_row(row_offset: int, column: int, pieces: Array, faction: Str
 
 
 func _ready():
-	#load_assets()
 	inherit_skirmish_data()
 	if tile_scene:
-		#tiles = TileManager.new()
+		tile_manager.tile_light_color = tile_light_color
+		tile_manager.tile_dark_color = tile_dark_color
+		tile_manager.tile_light_color2 = tile_light_color2
+		tile_manager.tile_dark_color2 = tile_dark_color2
+		tile_manager.tile_light_color_randomization =tile_light_color_randomization
+		tile_manager.tile_dark_color_randomization = tile_dark_color_randomization
+		tile_manager.columns = columns
+		tile_manager.rows = rows
+		tile_manager.faction1 = faction1
+		tile_manager.faction2 = faction2
 		tile_manager.setup_grid(tile_scene, self, columns, rows, tile_size)
+
 	else:
 		print()
-		#push_warning("Tile scene not assigned!")
-	skirmishui.init(self, "skirmish")  # give UI a reference to this Skirmish instance
+	skirmishui.init(self, "skirmish", tile_manager)  # give UI a reference to this Skirmish instance
 	skirmishui.turns_type = turns_type
-	#print("skirmish ", turns_type)
+	skirmishui.tile_manager = tile_manager
 	set_window_size()
 	skirmish_instantiate_pieces()
 

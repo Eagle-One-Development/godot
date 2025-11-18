@@ -1,4 +1,5 @@
-extends Node2D
+class_name Piece
+extends Node2D  # or whatever base you use
 
 
 # guidelines
@@ -28,7 +29,7 @@ var defense: int:
 		return _defense
 	set(value):
 		_defense = clamp(value, 0, 3)  # 0: none, 1: triangle, 2: square, 3: pentagon
-		print("Defense changed to:", _defense)
+		#print("Defense changed to:", _defense)
 
 		# Update the Defense layer if it exists
 		if is_instance_valid(defense_layer):
@@ -41,20 +42,30 @@ var defense: int:
 var _highlight_active: bool = false
 var _playable: bool = true
 var playable: bool:
+	#FactionManager.register_piece_playable(self)
 	get:
 		return _playable
 	set(value):
 		if _playable == value:
-			return
-		_playable = value
+			return #disregard duplicate value
+		_playable = value #non duplicate is assigned
 		emit_signal("playable_changed", value)
 		if not value:
 			visible = false
+			FactionManager.register_piece_nonplayable(self)
+			skirmish.skirmishui._piece_to_graveyard(self)
+		else:
+			visible = true
+			FactionManager.register_piece_playable(self)
 
 
 var defend_instructions = []  # defend = attack on a piece that just captured
 var attack_instructions = []
 var move_instructions = []
+
+# CHILD KNOWLEDGE # CHILD KNOWLEDGE # CHILD KNOWLEDGE # CHILD KNOWLEDGE #
+var _is_attacked_by = []
+var _is_defended_by = []
 # SIGNALS
 signal playable_changed(new_value: bool)
 
@@ -65,6 +76,8 @@ func UpdateMobility(piece_input: String):
 
 func OnClick():
 	print(self, "defense = ", defense)
+	if faction == "Skins":
+		print("skin color = ", $SpriteMain.modulate)
 	#print("OnClick: ", faction)
 	#print("OnClick: ", piece_type)
 	#print("OnClick: ", self.global_position)
@@ -169,8 +182,6 @@ func get_reachable_tiles() -> Array:
 				reachable_tiles.append(target_tile)
 	return reachable_tiles
 
-
-
 func _sort_by_distance(a, b):
 	return int(b.distance - a.distance)  # closest first
 
@@ -184,11 +195,10 @@ func bootstrap(piece_input: String, tile_input: Vector2i, faction_input: String)
 	self.faction = faction_input
 	self.piece_type = piece_input
 	self.xy = tile_input
+	FactionManager.register_piece_playable(self)
 	if piece_input == "Queen":
 		defense = 3
-	occupying._influence(faction)
-	occupying._influence(faction)
-	occupying._influence(faction)
+	occupying._fortify(faction)
 	#self.global_position = parent_tile.global_position
 	
 	## --- Validate piece type ---
@@ -208,7 +218,7 @@ func bootstrap(piece_input: String, tile_input: Vector2i, faction_input: String)
 	var color_primary := FactionManager.get_color(faction, "primary")
 	if has_node("SpriteMain"):
 		$SpriteMain.modulate = color_primary
-		#color_primary = color_primary
+		color_primary = color_primary
 	else:
 		self.modulate = color_primary
 
@@ -227,7 +237,7 @@ func bootstrap(piece_input: String, tile_input: Vector2i, faction_input: String)
 	if has_node("Defense"):
 		var defense_layer: Node2D = $Defense
 		defense = 1
-		print("defense node found!")
+		#print("defense node found!")
 		#push_warning("SpriteAccents not found; applying texture to root node")
 	#print("Bootstrap: %s accent texture assigned!" % piece_input)
 
@@ -262,7 +272,10 @@ func bootstrap(piece_input: String, tile_input: Vector2i, faction_input: String)
 			# Simple pawn moves (forward only, no captures yet)
 			# Could later add diagonal capture instructions
 			move_instructions += [
-				{"direction": Vector2i(0,1), "max_range": 1, "type": "step"}
+				{"direction": Vector2i(0,1), "max_range": 1, "type": "step"},
+				{"direction": Vector2i(0,-1), "max_range": 1, "type": "step"},
+				{"direction": Vector2i(1,0), "max_range": 1, "type": "step"},
+				{"direction": Vector2i(-1,0), "max_range": 1, "type": "step"},
 			]
 		"Rook":
 			move_instructions += [
@@ -311,7 +324,7 @@ func load_assets():
 
 
 func move(target_xy):
-	print("MOVE REQUEST: ", self, " to ", target_xy)
+	#print("MOVE REQUEST: ", self, " to ", target_xy)
 	depart_tile_occupation()
 	#insert move animation here
 	arrive_tile_occupation(target_xy)
@@ -325,6 +338,8 @@ func depart_tile_occupation():
 	occupying = null
 	#tile_manager._reset_highlighted_tiles()
 	#print()
+	#FactionManager
+	# to all pieces you are currently attacking and defending: calculate_relations()
 
 func arrive_tile_occupation(target_xy):
 	if target_xy.occupant and target_xy.occupant.faction != self.faction:
@@ -339,12 +354,17 @@ func arrive_tile_occupation(target_xy):
 	target_xy.occupant = self
 	occupying = target_xy
 	position = target_xy.position
-	occupying._influence(faction)
+	occupying._fortify(faction)
 	tile_manager.highlighted_tiles = get_reachable_tiles()
+	calculate_relations()
 	#print()
 
 
 func _is_captured():
 	print("oh no ", self, " got captured!")
-	self.playable = false
-	#send to graveyard! in skirmishui!
+	occupying = null
+	playable = false
+	#send to graveyard! from var playable!
+
+func calculate_relations():
+	print()
