@@ -56,11 +56,9 @@ func _on_button1_pressed() -> void:
 	
 func _on_button2_pressed() -> void:
 	print("Button2 was pressed!")
-	tile_manager.SelectedPiece = null
-	
-	
-	
-	
+	var piece = tile_manager.SelectedPiece
+	AutoMove.piece_move(piece)
+
 func _piece_to_graveyard(piece: Piece) -> void:
 	piece.scale = Vector2(0.6, 0.6)
 

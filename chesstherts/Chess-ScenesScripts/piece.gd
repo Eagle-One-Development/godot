@@ -78,7 +78,7 @@ func OnClick():
 	print(self, "defense = ", defense)
 	if faction == "Skins":
 		print("skin color = ", $SpriteMain.modulate)
-	#print("OnClick: ", faction)
+	print("OnClick: ", faction, playable, occupying)
 	#print("OnClick: ", piece_type)
 	#print("OnClick: ", self.global_position)
 	#print("OnClick: PARENT ", parent_tile)

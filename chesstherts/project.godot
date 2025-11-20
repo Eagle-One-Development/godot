@@ -19,6 +19,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 FactionManager="*res://Chess-ScenesScripts/factionmanager.gd"
+AutoMove="*res://Chess-ScenesScripts/automove.gd"
 
 [rendering]
 
