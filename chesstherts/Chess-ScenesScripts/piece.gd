@@ -322,6 +322,14 @@ func load_assets():
 		"BigBoy": load("res://Chess-Assets/WKing.svg"),
 	}
 
+# future design will be 
+# func reposition: decides which is happening.... #
+# if occupant?
+	# func defend (if attack_instructions.occupant.faction == self.faction)
+	# func attack (else attack_instructions.occupant.faction != self.faction)
+# else
+	# func move (move_instructions)
+
 
 func move(target_xy):
 	#print("MOVE REQUEST: ", self, " to ", target_xy)
