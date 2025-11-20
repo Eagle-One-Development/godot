@@ -115,7 +115,7 @@ const SKINS_PRIMARY_OPTIONS := [
 static func get_color(faction: String, key: String = "primary") -> Color:
 	if not FACTIONS.has(faction):
 		push_warning("Invalid faction: " + faction)
-		return Color(1, 0, 1, 1) # magenta for error
+		return Color(1, 1, 1, 1) # magenta for error
 
 	# Special case: pick a random color from the list
 	if faction == "Skins" and key == "primary":
