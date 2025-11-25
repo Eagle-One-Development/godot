@@ -1,15 +1,31 @@
-[gd_scene load_steps=5 format=3 uid="uid://bn3yq4usikllx"]
+[gd_scene load_steps=9 format=3 uid="uid://bn3yq4usikllx"]
 
 [ext_resource type="Script" uid="uid://bnsf7k8sirpkr" path="res://Chess-ScenesScripts/skirmishui.gd" id="1_ptls4"]
 [ext_resource type="Script" uid="uid://cqmvvhb8diedc" path="res://Chess-ScenesScripts/uibutton.gd" id="2_7y7ds"]
 
+[sub_resource type="InputEventKey" id="InputEventKey_5ubna"]
+device = -1
+keycode = 51
+unicode = 51
+
+[sub_resource type="Shortcut" id="Shortcut_kwe7a"]
+events = [SubResource("InputEventKey_5ubna")]
+
 [sub_resource type="InputEventKey" id="InputEventKey_7y7ds"]
 device = -1
-keycode = 32
-unicode = 32
+keycode = 50
+unicode = 50
 
 [sub_resource type="Shortcut" id="Shortcut_66ry5"]
 events = [SubResource("InputEventKey_7y7ds")]
+
+[sub_resource type="InputEventKey" id="InputEventKey_66ry5"]
+device = -1
+keycode = 49
+unicode = 49
+
+[sub_resource type="Shortcut" id="Shortcut_5ubna"]
+events = [SubResource("InputEventKey_66ry5")]
 
 [node name="SkirmishUi" type="Control"]
 layout_mode = 3
@@ -63,13 +79,23 @@ layout_mode = 0
 offset_right = 83.0
 offset_bottom = 31.0
 
+[node name="Button3" type="Button" parent="Main/VBoxContainer"]
+layout_mode = 2
+action_mode = 0
+shortcut = SubResource("Shortcut_kwe7a")
+text = "AUTOMOVE PIECE"
+script = ExtResource("2_7y7ds")
+
 [node name="Button2" type="Button" parent="Main/VBoxContainer"]
 layout_mode = 2
 action_mode = 0
 shortcut = SubResource("Shortcut_66ry5")
+text = "AUTOMOVE FACTION"
 script = ExtResource("2_7y7ds")
 
 [node name="Button1" type="Button" parent="Main/VBoxContainer"]
 layout_mode = 2
 action_mode = 0
+shortcut = SubResource("Shortcut_5ubna")
+text = "RANDOMIZE"
 script = ExtResource("2_7y7ds")

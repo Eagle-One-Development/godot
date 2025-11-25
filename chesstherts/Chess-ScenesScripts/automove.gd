@@ -1,189 +1,207 @@
 extends Node
 
 # ===================================================
-# PUBLIC ENTRY POINT
+# PUBLIC: Move a single piece
 # ===================================================
-static func piece_move(piece, depth: int = 3) -> void:
+static func piece_move(piece) -> void:
 	if piece == null:
-		print("AutoMove piece_move: piece is null")
+		print("AutoMove: piece is null")
 		return
 	if piece.tile_manager == null:
-		print("AutoMove piece_move: piece.tile_manager is null")
+		print("AutoMove: tile_manager is null")
 		return
 
-	var tile: Node2D = _choose_best_tile(piece, depth)
-	if tile != null:
-		print("AutoMove: moving", piece.name, "to", tile.xy)
-		piece.move(tile)
-	else:
-		print("AutoMove: No valid move for", piece.name)
+	# Make sure relations are fresh
+	piece.calculate_relations()
 
-# ===================================================
-# Make all moves for a faction
-# ===================================================
-static func faction_move(faction, depth: int = 3) -> void:
-	if faction == null:
-		print("AutoMove faction_move: faction is null")
+	var moves := []
+	moves.append_array(piece.can_traverse_tiles)
+	moves.append_array(piece.can_attack_tiles)
+
+	if moves.is_empty():
+		print("AutoMove: No moves for", piece.name)
 		return
 
-	# Get all playable pieces for this faction
-	var faction_pieces: Array = FactionManager.get_playable_pieces_by_faction(faction)
-	if faction_pieces.size() == 0:
-		print("AutoMove faction_move: no playable pieces for faction", faction)
-		return
+	var best_tile := _choose_best_tile(piece, moves)
 
-	# List of pieces that can capture an enemy in 1 move
-	var priority_list: Array = []
-
-	for piece in faction_pieces:
-		# Check the best move with depth = 1 (1-turn moves)
-		var piece_best_tile: Node2D = _choose_best_tile(piece, 1)
-		if piece_best_tile != null:
-			# If best tile has enemy occupant, this is a capture opportunity
-			if piece_best_tile.occupant != null and piece_best_tile.occupant.faction != faction:
-				priority_list.append(piece)
-				print("AutoMove faction_move: piece", piece.name, "can capture", piece_best_tile.occupant.name)
-
-	# For now, just print priority list
-	if priority_list.size() > 0:
-		print()
-		#print("AutoMove faction_move: priority capture pieces:", [p.name for p in priority_list])
+	if best_tile:
+		print("AutoMove: moving", piece.name, "to", best_tile.xy)
+		piece.move(best_tile)
 	else:
-		print("AutoMove faction_move: no immediate captures available")
+		print("AutoMove: No legal tile for", piece.name)
 
 
 
-
-
-
-
-
-# ===================================================
-# PRUNING DEPTH SEARCH
-# ===================================================
-static func _choose_best_tile(piece, depth: int) -> Node2D:
-	var seen := {}
-
-	var frontier: Array = piece.get_reachable_tiles()
-	var origin_layer: Array = frontier.duplicate()
-	var layer_depth: int = depth
-
-	# Mark initial
-	for tile in frontier:
-		if tile is Node2D:
-			seen[tile.xy] = true
-
-	var best_first_layer: Node2D = _best_tile_from_list(piece, origin_layer)
-	var best_score: float = -INF
-
-	# Evaluate score for depth-1 moves
-	if best_first_layer != null:
-		best_score = _score_tile(piece, best_first_layer)
-
-	# Now explore future layers, but DO NOT return them directly
-	while layer_depth > 1:
-		var next_layer: Array = []
-
-		for tile in frontier:
-			if not (tile is Node2D):
-				continue
-
-			var tiles2: Array = _pseudo_reachable(piece, tile.xy)
-
-			for t in tiles2:
-				if t is Node2D and not seen.has(t.xy):
-					seen[t.xy] = true
-					next_layer.append(t)
-
-		if next_layer.size() == 0:
-			break
-
-		# Deep layer scoring—only UPDATE score, don't select illegal tiles
-		var deep_candidate: Node2D = _best_tile_from_list(piece, next_layer)
-		if deep_candidate != null:
-			var s = _score_tile(piece, deep_candidate)
-			if s > best_score:
-				best_score = s
-				# DO NOT REPLACE with deep_candidate
-				# Instead reinforce best_found_from_first_layer
-				best_first_layer = _best_tile_from_list(piece, origin_layer)
-
-		frontier = next_layer
-		layer_depth -= 1
-
-	return best_first_layer
-
-
-# ===================================================
-# SCORING
-# ===================================================
-static func _score_tile(piece, tile: Node2D) -> float:
-	if tile.occupant == null:
-		return 1.0
-	elif tile.occupant.faction != piece.faction:
-		return 10.0
-	else:
-		return -99999.0
-
-
-# ===================================================
-# RANDOM TIEBREAKING
-# ===================================================
-static func _best_tile_from_list(piece, tiles: Array) -> Node2D:
-	if tiles.size() == 0:
+static func _choose_best_tile(piece, tiles: Array) -> Node2D:
+	# where scores get counted!
+	if tiles.is_empty():
 		return null
 
-	var best_score: float = -INF
-	var candidates: Array = []
+	var best_score: int = -999999
+	var best_tiles: Array = []
 
 	for tile in tiles:
-		if not (tile is Node2D):
+		if tile == null:
 			continue
+		var s: int = _score_tile(piece, tile)
 
-		var score: float = _score_tile(piece, tile)
+		if s > best_score:
+			best_score = s
+			best_tiles = [tile]
+		elif s == best_score:
+			best_tiles.append(tile)
 
-		if score > best_score:
-			best_score = score
-			candidates = [tile]
-		elif score == best_score:
-			candidates.append(tile)
-
-	if candidates.size() == 0:
+	if best_tiles.is_empty():
 		return null
 
-	return candidates[randi() % candidates.size()]
+	# Random selection among equally scored tiles
+	var chosen_tile: Node2D = best_tiles[randi() % best_tiles.size()]
+	print("_choose_best_tile = ", piece, " * ", chosen_tile, " score=", best_score)
+	return chosen_tile
 
 
-# ===================================================
-# GENERATE MOVES FOR A PIECE AT *TEMPORARY XY*
-# ===================================================
-static func _pseudo_reachable(piece, xy: Vector2i) -> Array:
-	var results: Array = []
 
-	for instr in piece.move_instructions:
-		var dir: Vector2i = instr.direction
-		var rng: int = instr.max_range
-		var typ: String = instr.type
 
-		if typ == "step":
-			var txy: Vector2i = xy + dir
-			var tile: Node2D = piece.tile_manager.get_tile(txy.x, txy.y)
-			if tile and (tile.occupant == null or tile.occupant.faction != piece.faction):
-				results.append(tile)
+static func _score_tile(piece, tile: Node2D) -> int:
+	var score: float = 0
 
-		elif typ == "sliding":
-			for i in range(1, rng + 1):
-				var txy: Vector2i = xy + dir * i
-				var tile: Node2D = piece.tile_manager.get_tile(txy.x, txy.y)
+	# 1. CAPTURE
+	if tile.occupant == null:
+		score += 0
+	else:
+		if tile.occupant.faction != piece.faction:
+			score += 10
+		else:
+			return -99999
 
-				if tile == null or not tile.playable:
-					break
+	# 2. THREAT ASSESSMENT
+	if tile.has_method("_assess_threat"):
+		var threat_faction: String = tile._assess_threat()
+		print("assess threat for ", tile.xy, " = ", threat_faction)
 
-				if tile.occupant:
-					if tile.occupant.faction != piece.faction:
-						results.append(tile)
-					break
+		if threat_faction == piece.faction:
+			score += 2.2
+		elif threat_faction == null:
+			score += 0
+		else:
+			score -= 2.3
+	print("score b4 pawn p= ", tile.xy, " = ", score)
+	# 3. PUSH VECTOR
+	if piece.push_pawn_vector != Vector2i(0, 0):
+		var delta: Vector2i = tile.xy - piece.xy
+		var push: Vector2i = piece.push_pawn_vector
 
-				results.append(tile)
+		var x_align: bool = false
+		var y_align: bool = false
 
-	return results
+		# X alignment
+		if (delta.x + push.x) < delta.x:
+			x_align = true
+
+		if (delta.y + push.y) < delta.y:
+			y_align = true
+
+		# Apply bonus/penalty
+		if x_align and y_align:
+			score += 0
+		elif x_align or y_align:
+			score += 2
+		else:
+			score -= 0
+	print("score w/ ppush = ", tile.xy, " = ", score)
+	# 4. Discourage revisiting previous positions
+	if piece.xy_log.has(tile.xy):
+		score += -6.66
+	print("score w/ xylog final = ", tile.xy, " = ", score)
+	return score
+
+
+
+static func _break_tie_by_push(piece, tiles: Array) -> Node2D:
+	var push: Vector2i = piece.push_pawn_vector
+
+	if push == Vector2i(0, 0):
+		tiles.sort_custom(func(a, b): return a.xy.hash() < b.xy.hash())
+		return tiles[0]
+
+	var best: Node2D = tiles[0]
+	var best_align: int = -999999
+
+	for t in tiles:
+		var delta: Vector2i = t.xy - piece.xy
+		var align: int = delta.x * push.x + delta.y * push.y
+
+		if align > best_align:
+			best_align = align
+			best = t
+
+	return best
+
+
+
+static func faction_move(faction:String) -> void:
+	if faction == null:
+		print("AutoMove: faction is null")
+		return
+
+	var faction_pieces := FactionManager.get_playable_pieces_by_faction(faction)
+
+	for p in faction_pieces:
+		if p:
+			piece_move(p)
+
+static func faction_move_random_one(faction: String) -> void:
+	if faction == null:
+		push_error("faction_move_random_one: faction is null")
+		return
+
+	# Get playable pieces
+	var faction_pieces: Array = FactionManager.get_playable_pieces_by_faction(faction)
+	if faction_pieces.is_empty():
+		print("faction_move_random_one: no playable pieces for faction ", faction)
+		return
+
+	# Pick a random piece
+	var piece: Piece = faction_pieces[randi() % faction_pieces.size()]
+	if piece == null:
+		return
+
+	# Calculate piece relations
+	piece.calculate_relations()
+
+	# Combine traversable and attack tiles
+	var candidate_tiles: Array = []
+	candidate_tiles.append_array(piece.can_traverse_tiles)
+	candidate_tiles.append_array(piece.can_attack_tiles)
+
+	if candidate_tiles.is_empty():
+		print("No valid moves for ", piece.name)
+		return
+
+	# Score all candidate tiles
+	var best_score: float = -INF
+	var best_tiles: Array = []
+
+	for tile in candidate_tiles:
+		if tile == null:
+			continue
+
+		var s: float = _score_tile(piece, tile)
+
+		if s > best_score:
+			best_score = s
+			best_tiles = [tile]
+		elif s == best_score:
+			best_tiles.append(tile)
+
+	if best_tiles.is_empty():
+		print("No valid moves for ", piece.name)
+		return
+
+	# Pick a random tile among best-scoring tiles
+	var chosen_tile: Node2D = best_tiles[randi() % best_tiles.size()]
+	print("AutoMove moving ", piece.name, " to ", chosen_tile.xy, " (score=", best_score, ")")
+
+	# Move the piece (updates xy property automatically)
+	piece.xy = chosen_tile.xy
+	piece.move(chosen_tile)

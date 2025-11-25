@@ -12,12 +12,14 @@ var tile_manager
 @onready var Graveyard_Faction2: Panel = $Main/Graveyard/Faction2GY
 @onready var Button1: Button = $Main/VBoxContainer/Button1
 @onready var Button2: Button = $Main/VBoxContainer/Button2
+@onready var Button3: Button = $Main/VBoxContainer/Button3
 
 func _ready() -> void:
 	Button1.skirmishui = self
 	Button2.skirmishui = self
 	Button1.pressed.connect(_on_button1_pressed)
 	Button2.pressed.connect(_on_button2_pressed)
+	Button3.pressed.connect(_on_button3_pressed)
 
 func init(skirmish_ref: Node, turns_type_ref: String, tile_manager_ref: Node,) -> void:
 	skirmish = skirmish_ref
@@ -30,8 +32,8 @@ func init(skirmish_ref: Node, turns_type_ref: String, tile_manager_ref: Node,) -
 	if not layer or not (layer is CanvasLayer):
 		print("SkirmishUI: couldn't find a CanvasLayer parent.")
 		return
-	print("SkirmishUI: found a CanvasLayer parent!")
-	print("skirmishui", tile_manager)
+	#print("SkirmishUI: found a CanvasLayer parent!")
+	#print("skirmishui", tile_manager)
 	var tile_size: float = 64.0
 	if "tile_size" in skirmish:
 		tile_size = float(skirmish.tile_size)
@@ -53,9 +55,19 @@ func init(skirmish_ref: Node, turns_type_ref: String, tile_manager_ref: Node,) -
 func _on_button1_pressed() -> void:
 	print("Button1 was pressed!")
 	skirmish._Randomize_Delete_Tiles()
-	
+
+
 func _on_button2_pressed() -> void:
 	print("Button2 was pressed!")
+	var piece = tile_manager.SelectedPiece
+	if piece:
+		AutoMove.faction_move_random_one(piece.faction)
+	else:
+		AutoMove.faction_move_random_one(tile_manager.faction2)
+
+
+func _on_button3_pressed() -> void:
+	print("Button3 was pressed!")
 	var piece = tile_manager.SelectedPiece
 	AutoMove.piece_move(piece)
 

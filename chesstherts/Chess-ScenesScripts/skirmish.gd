@@ -37,7 +37,9 @@ var tile_dark_color2: Color
 var tile_light_color_randomization: float
 var tile_dark_color_randomization: float
 var faction1
+var faction1_vector: Vector2i = Vector2i(0,1) # topside faction coming down
 var faction2
+var faction2_vector: Vector2i = Vector2i(0,-1) # bottomside faction coming up
 var columns: int = 8
 var rows: int = 8
 var tile_size: float = 64
@@ -94,12 +96,17 @@ func spawn_faction_row(row_offset: int, column: int, pieces: Array, faction: Str
 
 		var piece_type: String = String(raw_piece)
 		var x: int = start_x + i
+		var push_pawn_vector: Vector2i = Vector2i(0,0)
+		if faction == faction1:
+			push_pawn_vector = faction1_vector
+		else: 
+			push_pawn_vector = faction2_vector
 		var tile := tile_manager.get_tile(x, row_offset)
 		if not tile:
 			#push_warning("Tile not found at: ", x, row_offset)
 			continue
 
-		tile.spawn_piece(piece_type, faction)
+		tile.spawn_piece(piece_type, faction, push_pawn_vector)
 		#print("Spawned", piece_type, "for", faction, "at tile:", tile.name, "(x:", x, "y:", row_offset, ")")
 
 
@@ -125,6 +132,15 @@ func _ready():
 	skirmishui.tile_manager = tile_manager
 	set_window_size()
 	skirmish_instantiate_pieces()
+	# assign push_pawn_vector
+	for p in FactionManager.get_all_playable_pieces():
+		if p.faction == faction1:
+			p.push_pawn_vector = faction2_vector
+			#print(p,"push_pawn_vector = ", faction1_vector )
+		else:
+			p.push_pawn_vector = faction1_vector
+			#print(p,"push_pawn_vector = ", faction2_vector )
+	FactionManager.all_playable_pieces_calculate_relations()
 
 
 func inherit_skirmish_data():
@@ -156,6 +172,6 @@ func _Randomize_Delete_Tiles():
 
 	# 3. Act on the tile
 	print("Randomly disabled tile at:", random_coords, "|", random_tile)
-
+	tile_manager.remove_tile(random_tile)
 	random_tile.playable = false
 	

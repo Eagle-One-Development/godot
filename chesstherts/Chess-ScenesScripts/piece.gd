@@ -14,7 +14,18 @@ var faction: String = "Skin"
 var piece_type: String = "Pawn"
 var PieceTextures: Dictionary = {}
 
-var xy: Vector2i = Vector2i(0, 0)
+var _xy: Vector2i = Vector2i(0, 0)
+var xy_log: Array = []
+
+var xy: Vector2i:
+	get:
+		return _xy
+	set(value):
+		_xy = value
+		if not xy_log.has(value):
+			xy_log.append(value)
+
+var push_pawn_vector: Vector2i = Vector2i(0, 0) #Vector2i(0, +-1)
 
 var color_primary
 var color_secondary
@@ -40,6 +51,11 @@ var defense: int:
 
 
 var _highlight_active: bool = false
+	# if true:
+	
+		#tile_manager.highlighted_tiles.append(can_traverse_tiles)
+		#tile_manager.highlighted_tiles.append(can_attack_tiles)
+		
 var _playable: bool = true
 var playable: bool:
 	#FactionManager.register_piece_playable(self)
@@ -61,11 +77,15 @@ var playable: bool:
 
 var defend_instructions = []  # defend = attack on a piece that just captured
 var attack_instructions = []
-var move_instructions = []
+var traversal_instructions = []
 
+var can_attack_tiles = [] # points to tiles: contains tile.occupant.faction != self.faction
+var can_defend_tiles = [] # points to tiles: contains tile.occupant.faction == self.faction
+var can_traverse_tiles = [] # points to tiles: contains no tile.occupant
+
+
+var is_blocking_sliders = [] #  if self moves, these pieces get an update to their relations
 # CHILD KNOWLEDGE # CHILD KNOWLEDGE # CHILD KNOWLEDGE # CHILD KNOWLEDGE #
-var _is_attacked_by = []
-var _is_defended_by = []
 # SIGNALS
 signal playable_changed(new_value: bool)
 
@@ -75,10 +95,15 @@ func UpdateMobility(piece_input: String):
 
 
 func OnClick():
-	print(self, "defense = ", defense)
+	print("PIECE BLOCKING= ", is_blocking_sliders)
+	print("pawn push = ", push_pawn_vector)
+	print("piece: ", xy_log)
+	#print(self, "defense = ", defense)
 	if faction == "Skins":
 		print("skin color = ", $SpriteMain.modulate)
-	print("OnClick: ", faction, playable, occupying)
+	#print("OnClick: ", faction, playable, occupying)
+	#print("piece attacking",can_attack_tiles)
+	#print("piece defending",can_defend_tiles)
 	#print("OnClick: ", piece_type)
 	#print("OnClick: ", self.global_position)
 	#print("OnClick: PARENT ", parent_tile)
@@ -93,97 +118,25 @@ func OnClick():
 
 func selected() -> void:
 	# Start highlight sequence
+	#self.global_scale = Vector2i(1.2, 1.2)
 	_highlight_active = true
-	tile_manager.highlighted_tiles = get_reachable_tiles()
+	calculate_relations()
+	highlight_my_reach()
 
-	var reachable_tiles = get_reachable_tiles()
-	if not reachable_tiles:
-		print("%s found no reachable tiles" % name)
-		# if no reachable tiles, flicker self tile
-		self.occupying._flash_highlight(self.faction)
-		tile_manager.highlighted_tiles = [self.occupying]
-		return
 
-#
-	## highlight animation
-	## Group tiles by distance
-	#var waves := {}
-	#for item in reachable_tiles:
-		#var dist = item.distance
-		#if not waves.has(dist):
-			#waves[dist] = []
-		#waves[dist].append(item.tile)
-#
-	#var sorted_distances = waves.keys()
-	#sorted_distances.sort()  # closest first
-	## Timing
-	#var total_time: float = 0.01
-	#var first_delay: float = 0.01
-	#var remaining_time: float = total_time - first_delay
-	#var num_waves: int = sorted_distances.size()
-	#var per_wave_delay: float = 0
-	#if num_waves > 1:
-		#per_wave_delay = remaining_time / (num_waves - 1)
-#
-	## Highlight each wave
-	#for i in range(num_waves):
-		## Wait for delay
-		#await get_tree().create_timer(first_delay + per_wave_delay * i).timeout
-#
-		## Stop if deselected
-		#if not _highlight_active:
-			#return
-#
-		#for tile in waves[sorted_distances[i]]:
-			#tile._highlight_for_faction(faction)
-	##print("tile_manager.highlighted_tiles = ", tile_manager.highlighted_tiles)
+				#var reachable_tiles = get_reachable_tiles()
+				#if not reachable_tiles:
+					#print("%s found no reachable tiles" % name)
+					## if no reachable tiles, flicker self tile
+					#self.occupying._flash_highlight(self.faction)
+					#tile_manager.highlighted_tiles = [self.occupying]
+					#return
 
 
 func deselected() -> void:
 	# Stop any ongoing highlight sequence
 	_highlight_active = false
 	self.occupying._reset_color()
-
-	## Reset highlighted tiles
-	#var reachable_tiles = get_reachable_tiles()
-	#for item in reachable_tiles:
-		#item.tile._reset_color()
-		#item.tile._flashing = false
-
-
-func get_reachable_tiles() -> Array:
-	var reachable_tiles: Array = []
-
-	if not move_instructions:
-		push_warning("%s has no move instructions!" % name)
-		return reachable_tiles
-
-	for instr in move_instructions:
-		var direction: Vector2i = instr.direction
-		var max_range: int = instr.max_range
-		var move_type: String = instr.type  # "sliding" or "step"
-
-		if move_type == "step":
-			var target_xy = xy + direction
-			var target_tile = tile_manager.get_tile(target_xy.x, target_xy.y)
-			if target_tile and (not target_tile.occupant or target_tile.occupant.faction != faction):
-				reachable_tiles.append(target_tile)
-
-		elif move_type == "sliding":
-			for i in range(1, max_range + 1):
-				var target_xy = xy + direction * i
-				var target_tile = tile_manager.get_tile(target_xy.x, target_xy.y)
-				if not target_tile or target_tile.playable == false:
-					break
-				if target_tile.occupant:
-					if target_tile.occupant.faction != faction:
-						reachable_tiles.append(target_tile)
-					break
-				reachable_tiles.append(target_tile)
-	return reachable_tiles
-
-func _sort_by_distance(a, b):
-	return int(b.distance - a.distance)  # closest first
 
 
 func bootstrap(piece_input: String, tile_input: Vector2i, faction_input: String):
@@ -242,12 +195,23 @@ func bootstrap(piece_input: String, tile_input: Vector2i, faction_input: String)
 	#print("Bootstrap: %s accent texture assigned!" % piece_input)
 
 	# --- Assign moves based on piece type ---
-	move_instructions.clear()
+	traversal_instructions.clear()
+	attack_instructions.clear()
 	#print("now adding move instructions")
 	match piece_type:
 		"Queen":
 			# 4 diagonal sliding + 4 axis sliding
-			move_instructions += [
+			traversal_instructions += [
+				{"direction": Vector2i(1,1), "max_range": 7, "type": "sliding"},
+				{"direction": Vector2i(1,-1), "max_range": 7, "type": "sliding"},
+				{"direction": Vector2i(-1,1), "max_range": 7, "type": "sliding"},
+				{"direction": Vector2i(-1,-1), "max_range": 7, "type": "sliding"},
+				{"direction": Vector2i(1,0), "max_range": 7, "type": "sliding"},
+				{"direction": Vector2i(-1,0), "max_range": 7, "type": "sliding"},
+				{"direction": Vector2i(0,1), "max_range": 7, "type": "sliding"},
+				{"direction": Vector2i(0,-1), "max_range": 7, "type": "sliding"}
+			]
+			attack_instructions += [
 				{"direction": Vector2i(1,1), "max_range": 7, "type": "sliding"},
 				{"direction": Vector2i(1,-1), "max_range": 7, "type": "sliding"},
 				{"direction": Vector2i(-1,1), "max_range": 7, "type": "sliding"},
@@ -258,7 +222,17 @@ func bootstrap(piece_input: String, tile_input: Vector2i, faction_input: String)
 				{"direction": Vector2i(0,-1), "max_range": 7, "type": "sliding"}
 			]
 		"Knight":
-			move_instructions += [
+			traversal_instructions += [
+				{"direction": Vector2i(2,1), "max_range": 1, "type": "step"},
+				{"direction": Vector2i(1,2), "max_range": 1, "type": "step"},
+				{"direction": Vector2i(-1,2), "max_range": 1, "type": "step"},
+				{"direction": Vector2i(-2,1), "max_range": 1, "type": "step"},
+				{"direction": Vector2i(-2,-1), "max_range": 1, "type": "step"},
+				{"direction": Vector2i(-1,-2), "max_range": 1, "type": "step"},
+				{"direction": Vector2i(1,-2), "max_range": 1, "type": "step"},
+				{"direction": Vector2i(2,-1), "max_range": 1, "type": "step"}
+			]
+			attack_instructions += [
 				{"direction": Vector2i(2,1), "max_range": 1, "type": "step"},
 				{"direction": Vector2i(1,2), "max_range": 1, "type": "step"},
 				{"direction": Vector2i(-1,2), "max_range": 1, "type": "step"},
@@ -271,21 +245,38 @@ func bootstrap(piece_input: String, tile_input: Vector2i, faction_input: String)
 		"Pawn":
 			# Simple pawn moves (forward only, no captures yet)
 			# Could later add diagonal capture instructions
-			move_instructions += [
-				{"direction": Vector2i(0,1), "max_range": 1, "type": "step"},
-				{"direction": Vector2i(0,-1), "max_range": 1, "type": "step"},
-				{"direction": Vector2i(1,0), "max_range": 1, "type": "step"},
-				{"direction": Vector2i(-1,0), "max_range": 1, "type": "step"},
+			traversal_instructions += [
+				{"direction": push_pawn_vector, "max_range": 1, "type": "step"},
+			]
+			attack_instructions += [
+				{"direction": (push_pawn_vector + Vector2i(1, 0)), "max_range": 1, "type": "step"},
+				{"direction": (push_pawn_vector + Vector2i(-1, 0)), "max_range": 1, "type": "step"},
 			]
 		"Rook":
-			move_instructions += [
+			traversal_instructions += [
+				{"direction": Vector2i(1,0), "max_range": 7, "type": "sliding"},
+				{"direction": Vector2i(-1,0), "max_range": 7, "type": "sliding"},
+				{"direction": Vector2i(0,1), "max_range": 7, "type": "sliding"},
+				{"direction": Vector2i(0,-1), "max_range": 7, "type": "sliding"}
+			]
+			attack_instructions += [
 				{"direction": Vector2i(1,0), "max_range": 7, "type": "sliding"},
 				{"direction": Vector2i(-1,0), "max_range": 7, "type": "sliding"},
 				{"direction": Vector2i(0,1), "max_range": 7, "type": "sliding"},
 				{"direction": Vector2i(0,-1), "max_range": 7, "type": "sliding"}
 			]
 		"King":
-			move_instructions += [
+			traversal_instructions += [
+				{"direction": Vector2i(1,1), "max_range": 1, "type": "step"},
+				{"direction": Vector2i(1,-1), "max_range": 1, "type": "step"},
+				{"direction": Vector2i(-1,1), "max_range": 1, "type": "step"},
+				{"direction": Vector2i(-1,-1), "max_range": 1, "type": "step"},
+				{"direction": Vector2i(1,0), "max_range": 1, "type": "step"},
+				{"direction": Vector2i(-1,0), "max_range": 1, "type": "step"},
+				{"direction": Vector2i(0,1), "max_range": 1, "type": "step"},
+				{"direction": Vector2i(0,-1), "max_range": 1, "type": "step"}
+			]
+			attack_instructions += [
 				{"direction": Vector2i(1,1), "max_range": 1, "type": "step"},
 				{"direction": Vector2i(1,-1), "max_range": 1, "type": "step"},
 				{"direction": Vector2i(-1,1), "max_range": 1, "type": "step"},
@@ -296,19 +287,26 @@ func bootstrap(piece_input: String, tile_input: Vector2i, faction_input: String)
 				{"direction": Vector2i(0,-1), "max_range": 1, "type": "step"}
 			]
 		"Bishop":
-			move_instructions += [
+			traversal_instructions += [
+				{"direction": Vector2i(1,1), "max_range": 7, "type": "sliding"},
+				{"direction": Vector2i(1,-1), "max_range": 7, "type": "sliding"},
+				{"direction": Vector2i(-1,1), "max_range": 7, "type": "sliding"},
+				{"direction": Vector2i(-1,-1), "max_range": 7, "type": "sliding"}
+			]
+			attack_instructions += [
 				{"direction": Vector2i(1,1), "max_range": 7, "type": "sliding"},
 				{"direction": Vector2i(1,-1), "max_range": 7, "type": "sliding"},
 				{"direction": Vector2i(-1,1), "max_range": 7, "type": "sliding"},
 				{"direction": Vector2i(-1,-1), "max_range": 7, "type": "sliding"}
 			]
 		"BigBoy":
-			move_instructions += [
+			traversal_instructions += [
 				{"direction": Vector2i(1,1), "max_range": 7, "type": "sliding"},
 				{"direction": Vector2i(1,-1), "max_range": 7, "type": "sliding"},
 				{"direction": Vector2i(-1,1), "max_range": 7, "type": "sliding"},
 				{"direction": Vector2i(-1,-1), "max_range": 7, "type": "sliding"}
 			]
+	#calculate_relations() happens in skirmish setup after all pieces spawned
 
 
 func load_assets():
@@ -328,7 +326,44 @@ func load_assets():
 	# func defend (if attack_instructions.occupant.faction == self.faction)
 	# func attack (else attack_instructions.occupant.faction != self.faction)
 # else
-	# func move (move_instructions)
+	# func move (traversal_instructions)
+
+										#
+										#func get_reachable_tiles() -> Array:
+											#print("GET REACHABLE TILES CALLED.. NOT GOOD!")
+											#var reachable_tiles: Array = []
+										#
+											#if not traversal_instructions:
+												#push_warning("%s has no move instructions!" % name)
+												#return reachable_tiles
+										#
+											#for instr in traversal_instructions:
+												#var direction: Vector2i = instr.direction
+												#var max_range: int = instr.max_range
+												#var move_type: String = instr.type  # "sliding" or "step"
+										#
+												#if move_type == "step":
+													#var target_xy = xy + direction
+													#var target_tile = tile_manager.get_tile(target_xy.x, target_xy.y)
+													#if target_tile and (not target_tile.occupant or target_tile.occupant.faction != faction):
+														#reachable_tiles.append(target_tile)
+										#
+												#elif move_type == "sliding":
+													#for i in range(1, max_range + 1):
+														#var target_xy = xy + direction * i
+														#var target_tile = tile_manager.get_tile(target_xy.x, target_xy.y)
+														#if not target_tile or target_tile.playable == false:
+															#break
+														#if target_tile.occupant:
+															#if target_tile.occupant.faction != faction:
+																#reachable_tiles.append(target_tile)
+															#break
+														#reachable_tiles.append(target_tile)
+											#return reachable_tiles
+										#
+										#func _sort_by_distance(a, b):
+											#return int(b.distance - a.distance)  # closest first
+
 
 
 func move(target_xy):
@@ -337,13 +372,22 @@ func move(target_xy):
 	#insert move animation here
 	arrive_tile_occupation(target_xy)
 	#deselected()
-	tile_manager.highlighted_tiles = get_reachable_tiles()
+	update_relations_of_previously_blocked_sliders()
+	calculate_relations()
+	highlight_my_reach()
+	#tile_manager.highlighted_tiles = get_reachable_tiles()
 	
 
 func depart_tile_occupation():
 	#clear old information
+	update_relations_of_previously_blocked_sliders()
 	occupying.occupant = null
 	occupying = null
+	can_attack_tiles.clear()
+	can_defend_tiles.clear()
+	can_traverse_tiles.clear()
+
+	is_blocking_sliders.clear()
 	#tile_manager._reset_highlighted_tiles()
 	#print()
 	#FactionManager
@@ -363,16 +407,122 @@ func arrive_tile_occupation(target_xy):
 	occupying = target_xy
 	position = target_xy.position
 	occupying._fortify(faction)
-	tile_manager.highlighted_tiles = get_reachable_tiles()
-	calculate_relations()
+	#tile_manager.highlighted_tiles = get_reachable_tiles()
+	clear_relations_to_tiles()
+	calculate_relations() # populate can_attack_tiles can_traverse_tiles can_defend_tiles
+	highlight_my_reach()
+	update_relations_of_previously_blocked_sliders()
+	is_blocking_sliders.clear()
 	#print()
+	# update relations of previously blocked sliders
 
 
 func _is_captured():
 	print("oh no ", self, " got captured!")
 	occupying = null
 	playable = false
+	clear_relations_to_tiles()
 	#send to graveyard! from var playable!
 
-func calculate_relations():
-	print()
+func clear_relations_to_tiles():
+	if can_traverse_tiles:
+		for tile in can_traverse_tiles:
+			tile.can_be_traversed_by.erase(self)
+	if can_attack_tiles:
+		for tile in can_attack_tiles:
+			tile.can_be_attacked_by.erase(self)
+	if can_defend_tiles:
+		for tile in can_defend_tiles:
+			tile.can_be_attacked_by.erase(self)
+	
+	can_traverse_tiles.clear() # append tiles to tile_manager.highlighted_tiles
+	can_attack_tiles.clear() # append tiles to tile_manager.highlighted_tiles
+	can_defend_tiles.clear() # no append tiles, not a valid move yet
+
+func calculate_relations() -> void:
+	clear_relations_to_tiles()
+	# --- FIRST: movement-based empty-tile detection ---
+	if traversal_instructions:
+		for instr in traversal_instructions:
+			var direction: Vector2i = instr.direction
+			var max_range: int = instr.max_range
+			var move_type: String = instr.type   # "step" or "sliding"
+
+			if move_type == "step":
+				var target_tile = tile_manager.get_tile(xy.x + direction.x, xy.y + direction.y)
+				if target_tile and not target_tile.occupant:
+					can_traverse_tiles.append(target_tile)
+					target_tile.can_be_traversed_by.append(self)
+
+			elif move_type == "sliding":
+				for i in range(1, max_range + 1):
+					var target_tile = tile_manager.get_tile(xy.x + direction.x * i, xy.y + direction.y * i)
+					if not target_tile or target_tile.playable == false:
+						break
+					
+					if target_tile.occupant:
+						#target_tile.occupant.is_blocking_sliders.append(self)
+						break  
+					can_traverse_tiles.append(target_tile)
+					target_tile.can_be_traversed_by.append(self)
+
+	# --- SECOND: attack-based faction assessment ---
+	if attack_instructions:
+		for instr in attack_instructions:
+			var direction: Vector2i = instr.direction
+			var max_range: int = instr.max_range
+			var attack_type: String = instr.type   # "step" or "sliding"
+
+			if attack_type == "step":
+				var target_tile = tile_manager.get_tile(xy.x + direction.x, xy.y + direction.y)
+				_process_attack_tile(target_tile)
+
+			elif attack_type == "sliding":
+				for i in range(1, max_range + 1):
+					var target_tile = tile_manager.get_tile(xy.x + direction.x * i, xy.y + direction.y * i)
+					if not target_tile or target_tile.playable == false:
+						break
+
+					if target_tile.occupant:
+						_process_attack_tile(target_tile)
+						break   # sliding stops at first occupied tile
+
+
+func _process_attack_tile(target_tile):
+	if not target_tile:
+		return
+	var occ = target_tile.occupant
+
+	if not occ:
+		return
+
+	# Track relations
+	if occ.faction == faction:
+		can_defend_tiles.append(target_tile)
+		target_tile.can_be_attacked_by.append(self)
+		target_tile.occupant.is_blocking_sliders.append(self)
+	else:
+		can_attack_tiles.append(target_tile)
+		target_tile.can_be_attacked_by.append(self)
+		target_tile.occupant.is_blocking_sliders.append(self)
+
+	# Tell the tile who is attacking it
+	if "_is_attacked_by" in target_tile:
+		target_tile._is_attacked_by.append(self)
+		
+
+func highlight_my_reach():
+	var my_reach: Array = []
+	for t in can_attack_tiles:
+		my_reach.append(t)
+	for t in can_traverse_tiles:
+		my_reach.append(t)
+	tile_manager.highlighted_tiles = my_reach
+	#print("highlight_my_reach: ", my_reach)
+
+func update_relations_of_previously_blocked_sliders():
+	#used with old occupation.xy and new occupation.xy?
+	for piece in is_blocking_sliders:
+		piece.calculate_relations()
+		print(piece, " now unblocked and calculated relations")
+		is_blocking_sliders.erase(piece) # clear list

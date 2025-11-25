@@ -54,7 +54,7 @@ var faction2_row1_offset: Vector2i = Vector2i(0, 0)
 
 func setup_grid(tile_scene: PackedScene, parent: Node, cols: int, rows: int, _tile_size: float):
 	clear()
-	print("setup grid: ", tile_light_color, tile_dark_color)
+	#print("setup grid: ", tile_light_color, tile_dark_color)
 	skirmish = parent
 	tile_size = _tile_size
 	var offset = tile_size / 2
@@ -155,20 +155,20 @@ var SelectedPiece: Node:
 	set(value):
 		# Case 1: clicking same piece again = deselect
 		if _selected_piece == value:
-			print("double clicked ", _selected_piece, " so we deselect")
+			#print("double clicked ", _selected_piece, " so we deselect")
 			ClearSelection()
 			return
 		if value == null:
 			highlighted_tiles = []
-			print("selected piece change factions = erase highlighttiles")
+			#print("selected piece change factions = erase highlighttiles")
 
 		# Case 2: another piece is already selected → deselect it first
 		if _selected_piece and _selected_piece.has_method("deselected"):
-			print("currently selected ", _selected_piece, " is deselected for new selection:")
+			#print("currently selected ", _selected_piece, " is deselected for new selection:")
 			_selected_piece.deselected()
 
 		# Case 3: set the new selection
-		print("selected ", value)
+		#print("selected ", value)
 		_selected_piece = value
 		
 		if _selected_piece and _selected_piece.has_method("selected"):

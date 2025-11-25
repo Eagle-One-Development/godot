@@ -19,7 +19,7 @@ static var faction_members_nonplayable := { # pieces not in play "captured" "ban
 }
 
 static func register_piece_playable(piece: Node):
-	print("FacMan: register ", piece, " playable")
+	#print("FacMan: register ", piece, " playable")
 	var faction = piece.faction
 
 	if faction_members_playable.has(faction):
@@ -30,10 +30,10 @@ static func register_piece_playable(piece: Node):
 		if faction_members_nonplayable[faction].has(piece):
 			faction_members_nonplayable[faction].erase(piece)
 
-	print("inplay for ", faction, faction_members_playable[faction])
+	#print("inplay for ", faction, faction_members_playable[faction])
 
 static func register_piece_nonplayable(piece: Node):
-	print("FacMan: register ", piece, " nonplayable")
+	#print("FacMan: register ", piece, " nonplayable")
 	var faction = piece.faction
 
 	if faction_members_nonplayable.has(faction):
@@ -45,14 +45,29 @@ static func register_piece_nonplayable(piece: Node):
 		if faction_members_playable[faction].has(piece):
 			faction_members_playable[faction].erase(piece)
 
-	print("GY for ", faction, faction_members_nonplayable[faction])
+	#print("GY for ", faction, faction_members_nonplayable[faction])
+
+static func get_all_playable_pieces() -> Array:
+	var all_pieces: Array = []
+	for faction in faction_members_playable.keys():
+		var pieces = faction_members_playable[faction]
+		if pieces != null:
+			all_pieces.append_array(pieces)
+
+	return all_pieces
+
+static func all_playable_pieces_calculate_relations():
+	var all_pieces: Array = get_all_playable_pieces()
+	for piece in all_pieces:
+		piece.calculate_relations()
+
 
 static func get_playable_pieces_by_faction(faction: String) -> Array:
-	print("inplay for ", faction, faction_members_playable.get(faction, []))
+	#print("inplay for ", faction, faction_members_playable.get(faction, []))
 	return faction_members_playable.get(faction, [])
 
 static func get_nonplayable_pieces_by_faction(faction: String) -> Array:
-	print("GY for ", faction, faction_members_nonplayable.get(faction, []))
+	#print("GY for ", faction, faction_members_nonplayable.get(faction, []))
 	return faction_members_nonplayable.get(faction, [])
 
 

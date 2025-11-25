@@ -81,6 +81,8 @@ var fortification: int:
 			fortification_image.modulate = Color(base_color.r, base_color.g, base_color.b, 1)
 # CHILD KNOWLEDGE # CHILD KNOWLEDGE # CHILD KNOWLEDGE # CHILD KNOWLEDGE 
 @onready var occupant: Node = null
+var can_be_attacked_by = [] # pieces add themselves as reference here
+var can_be_traversed_by = [] # pieces add themselves as reference here
 
 
 var color: Color = Color.WHITE: # all color changes go to here
@@ -201,11 +203,6 @@ func _set_board_color_pattern() -> void:
 
 
 
-
-
-
-
-
 func _highlight_ramp_to_faction_color(faction_to_highlight: String) -> void:
 	if not highlight_primary:
 		return
@@ -258,9 +255,10 @@ func _on_click():
 	#skirmish._Randomize_Delete_Tiles()
 	#spawnpiece()
 	#print(name, " with faction ", faction, " and power of ", fortification, )
+	#print("attackers= ",can_be_attacked_by, "traversals= ",can_be_traversed_by)
 	
 	
-func spawn_piece(piece_type: String, faction: String):
+func spawn_piece(piece_type: String, faction: String, push_pawn_vector: Vector2i):
 	if occupant:
 		#push_warning("Tile already has a piece! " + str(name))
 		return
@@ -281,6 +279,7 @@ func spawn_piece(piece_type: String, faction: String):
 	piece_instance.occupying = self
 	#print("tile manager reference = ", tile_manager)
 	occupant = piece_instance
+	piece_instance.push_pawn_vector = push_pawn_vector
 
 	# 5. Bootstrap / setup
 	piece_instance.bootstrap(piece_type, xy, faction)
@@ -375,3 +374,34 @@ func _fortify(occupant_faction):
 
 func ramp_origin_color():
 	print()
+
+func _assess_threat() -> String:
+	if can_be_attacked_by.is_empty():
+		return ""
+
+	var counts := {}  # dictionary: faction -> count
+
+	# Count attackers by faction
+	for p in can_be_attacked_by:
+		if p == null:
+			continue
+
+		var f : String = p.faction
+		if f == null:
+			continue
+
+		if not counts.has(f):
+			counts[f] = 1
+		else:
+			counts[f] += 1
+
+	# Find faction with the highest count
+	var best_faction := ""
+	var best_score := -1
+
+	for f in counts.keys():
+		if counts[f] > best_score:
+			best_score = counts[f]
+			best_faction = f
+
+	return best_faction

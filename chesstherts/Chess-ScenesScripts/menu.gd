@@ -47,6 +47,6 @@ func _enter_tree():
 	skirmish.tile_dark_color_randomization = tile_dark_color_randomization
 
 func tile_color_to_factions():
-	print()
+	#print()
 	tile_light_color2 = tile_light_color.lerp(FactionManager.get_color(faction1, "primary"), 1)
 	tile_dark_color2 = tile_dark_color.lerp(FactionManager.get_color(faction2, "primary"), 1)
