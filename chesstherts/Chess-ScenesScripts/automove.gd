@@ -85,12 +85,19 @@ static func _score_tile(piece, tile: Node2D) -> int:
 			score += 0
 		else:
 			score -= 2.3
-	print("score b4 pawn p= ", tile.xy, " = ", score)
+			print(piece, " = ", score)
+	print("score b4 pawn p= ", score)
 	# 3. PUSH VECTOR
-	if piece.push_pawn_vector != Vector2i(0, 0):
-		var delta: Vector2i = tile.xy - piece.xy
+	# does this move benefit my army formation? "the pawn vector"
+	if piece.push_pawn_vector != Vector2i(0, 0): # null safe
+		var delta: Vector2i = tile.xy - piece.xy 
+		print("score check piece.delta ", delta)
+		# does this work?
+		# total movement happening, (3,3) to (5,5)
+		#
 		var push: Vector2i = piece.push_pawn_vector
-
+		print("score check piece.push ", push)
+		
 		var x_align: bool = false
 		var y_align: bool = false
 
@@ -108,8 +115,9 @@ static func _score_tile(piece, tile: Node2D) -> int:
 			score += 2
 		else:
 			score -= 0
-	print("score w/ ppush = ", tile.xy, " = ", score)
+	print("score w/ ppush vector = ", score)
 	# 4. Discourage revisiting previous positions
+	# this should be ignored if capturing enemy
 	if piece.xy_log.has(tile.xy):
 		score += -6.66
 	print("score w/ xylog final = ", tile.xy, " = ", score)
@@ -150,42 +158,54 @@ static func faction_move(faction:String) -> void:
 		if p:
 			piece_move(p)
 
+
 static func faction_move_random_one(faction: String) -> void:
 	if faction == null:
 		push_error("faction_move_random_one: faction is null")
 		return
 
 	# Get playable pieces
-	var faction_pieces: Array = FactionManager.get_playable_pieces_by_faction(faction)
-	if faction_pieces.is_empty():
-		print("faction_move_random_one: no playable pieces for faction ", faction)
+	var all_pieces: Array = FactionManager.get_playable_pieces_by_faction(faction)
+	if all_pieces.is_empty():
+		print("No playable pieces for faction ", faction)
+		return
+		print()
+	# Filter pieces that have at least 1 valid move
+	var movable_pieces: Array = []
+
+	for p in all_pieces:
+		if p == null:
+			continue
+
+		# MUST recalc before deciding
+		p.calculate_relations()
+
+		if not p.can_traverse_tiles.is_empty() or not p.can_attack_tiles.is_empty():
+			movable_pieces.append(p)
+
+	# If no piece has a valid move, stop
+	if movable_pieces.is_empty():
+		print("Faction ", faction, " has no valid moves!")
 		return
 
-	# Pick a random piece
-	var piece: Piece = faction_pieces[randi() % faction_pieces.size()]
-	if piece == null:
-		return
+	# Pick *only from pieces that can move*
+	var piece: Piece = movable_pieces[randi() % movable_pieces.size()]
 
-	# Calculate piece relations
-	piece.calculate_relations()
-
-	# Combine traversable and attack tiles
+	# Build tile list
 	var candidate_tiles: Array = []
 	candidate_tiles.append_array(piece.can_traverse_tiles)
 	candidate_tiles.append_array(piece.can_attack_tiles)
 
 	if candidate_tiles.is_empty():
-		print("No valid moves for ", piece.name)
+		# (should never happen now)
+		print("Unexpected: piece had no valid moves even after filtering.", piece.name)
 		return
 
-	# Score all candidate tiles
+	# Score tiles
 	var best_score: float = -INF
 	var best_tiles: Array = []
 
 	for tile in candidate_tiles:
-		if tile == null:
-			continue
-
 		var s: float = _score_tile(piece, tile)
 
 		if s > best_score:
@@ -195,13 +215,12 @@ static func faction_move_random_one(faction: String) -> void:
 			best_tiles.append(tile)
 
 	if best_tiles.is_empty():
-		print("No valid moves for ", piece.name)
+		print("No valid scoring tiles for ", piece.name)
 		return
 
-	# Pick a random tile among best-scoring tiles
-	var chosen_tile: Node2D = best_tiles[randi() % best_tiles.size()]
+	# Final tile choice
+	var chosen_tile = best_tiles[randi() % best_tiles.size()]
 	print("AutoMove moving ", piece.name, " to ", chosen_tile.xy, " (score=", best_score, ")")
 
-	# Move the piece (updates xy property automatically)
-	piece.xy = chosen_tile.xy
+	# Perform the move
 	piece.move(chosen_tile)

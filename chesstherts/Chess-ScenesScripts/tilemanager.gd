@@ -175,7 +175,7 @@ var SelectedPiece: Node:
 			_selected_piece.selected()
 
 		
-		emit_signal("selected_piece_changed", _selected_piece)
+		emit_signal("selected_piece_changed", _selected_piece.name)
 	get:
 		return _selected_piece
 
@@ -185,9 +185,15 @@ func ClearSelection():
 		_selected_piece.deselected()
 	_selected_piece = null
 	highlighted_tiles = []
-	print("CLEAR SELECTION TILES = ",highlighted_tiles)
+	print("CLEAR SELECTION TILES = ",highlighted_tiles.map(func(p): return p.name))
 	#print("Selection cleared")
 	emit_signal("selected_piece_changed", null)
+
+
+func _refresh_selected_piece_highlights():
+	if SelectedPiece:
+		SelectedPiece.calculate_relations()
+		SelectedPiece.highlight_my_reach()
 
 ######### clicking tile
 #do we select? do we clear select? 
@@ -205,7 +211,7 @@ func _on_tile_clicked(tile) -> void:
 	else:
 		# Tile is empty and not a highlighted move
 		ClearSelection()
-		print("_on_tile_clicked is empty, cleared selection: ", tile)
+		print("_on_tile_clicked is empty, cleared selection: ", tile.name)
 
 		
 func _reset_highlighted_tiles():

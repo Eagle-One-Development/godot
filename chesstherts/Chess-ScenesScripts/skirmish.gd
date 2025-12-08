@@ -49,7 +49,15 @@ var tile_size: float = 64
 @export var tile_scene: PackedScene # this points to piece.tscn
 
 var board_center := Vector2(columns * 0.5, rows * 0.5)
+var skirmish_id: int = -1
 
+var elapsed_time: float = 0.0
+var timer_running := true
+
+var elapsed_faction1: float = 0.0
+var elapsed_faction2: float = 0.0
+
+var active_faction: String = ""  # “Black”, “Blue”, etc.
 
 # CHILD KNOWLEDGE # CHILD KNOWLEDGE # CHILD KNOWLEDGE # CHILD KNOWLEDGE 
 @onready var skirmishui = $SkirmishUILayer/SkirmishUi
@@ -130,6 +138,8 @@ func _ready():
 	skirmishui.init(self, "skirmish", tile_manager)  # give UI a reference to this Skirmish instance
 	skirmishui.turns_type = turns_type
 	skirmishui.tile_manager = tile_manager
+	skirmishui.faction1 = faction1
+	skirmishui.faction2 = faction2
 	set_window_size()
 	skirmish_instantiate_pieces()
 	# assign push_pawn_vector
@@ -141,6 +151,13 @@ func _ready():
 			p.push_pawn_vector = faction1_vector
 			#print(p,"push_pawn_vector = ", faction2_vector )
 	FactionManager.all_playable_pieces_calculate_relations()
+	# game begins!
+	timer_running = true
+	elapsed_time = 0.0
+	elapsed_faction1 = 0.0
+	elapsed_faction2 = 0.0
+	active_faction = faction1  # or whoever starts
+
 
 
 func inherit_skirmish_data():
@@ -175,3 +192,24 @@ func _Randomize_Delete_Tiles():
 	tile_manager.remove_tile(random_tile)
 	random_tile.playable = false
 	
+
+
+# TIMER
+func _process(delta: float) -> void:
+	if not timer_running:
+		return
+
+	if active_faction == faction1:
+		elapsed_faction1 += delta
+	elif active_faction == faction2:
+		elapsed_faction2 += delta
+
+	# Update UI
+	skirmishui.update_faction_timers(elapsed_faction1, elapsed_faction2)
+	
+
+func switch_faction_turn():
+	if active_faction == faction1:
+		active_faction = faction2
+	else:
+		active_faction = faction1

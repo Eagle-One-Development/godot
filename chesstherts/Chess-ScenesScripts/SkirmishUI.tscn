@@ -37,11 +37,35 @@ layout_mode = 0
 offset_right = 109.0
 offset_bottom = 90.0
 
+[node name="Faction1Timer" type="Label" parent="Main"]
+offset_top = 36.0
+offset_right = 40.0
+offset_bottom = 59.0
+text = "0.0s"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Faction2Timer" type="Label" parent="Main"]
+offset_top = 18.0
+offset_right = 39.0
+offset_bottom = 41.0
+text = "0.0s"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TimerLabel" type="Label" parent="Main"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+text = "0.0s"
+horizontal_alignment = 1
+vertical_alignment = 1
+
 [node name="Graveyard" type="Panel" parent="Main"]
 layout_mode = 0
-offset_top = 135.0
+offset_top = 160.0
 offset_right = 109.0
-offset_bottom = 256.0
+offset_bottom = 281.0
 
 [node name="Button" type="Button" parent="Main/Graveyard"]
 layout_mode = 0
@@ -76,8 +100,9 @@ offset_bottom = 40.0
 
 [node name="VBoxContainer" type="VBoxContainer" parent="Main"]
 layout_mode = 0
-offset_right = 83.0
-offset_bottom = 31.0
+offset_top = 59.0
+offset_right = 171.0
+offset_bottom = 160.0
 
 [node name="Button3" type="Button" parent="Main/VBoxContainer"]
 layout_mode = 2

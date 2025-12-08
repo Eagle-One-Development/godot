@@ -36,6 +36,7 @@ const SQUARE_TEXTURE = preload("res://.godot/imported/square-64.png-c3709b2dbab9
 @onready var fortification_image: Sprite2D = $Fortification
 var grid_x: int
 var grid_y: int
+var grid_z: int # used to separate grids
 var xy: Vector2i = Vector2i(0, 0)
 var assign_dark: bool = false
 
@@ -54,7 +55,7 @@ var highlight_task: String:
 		_highlight_task = value
 		_update_highlight_task()
 
-#@onready var fortification_image: Sprite2D = $Fortification
+# related var # @onready var fortification_image: Sprite2D = $Fortification
 var faction: String
 var _fortification: int = 0
 var fortification: int:
@@ -80,9 +81,33 @@ var fortification: int:
 			var base_color: Color = FactionManager.get_color(faction, "primary") if faction else Color.WHITE
 			fortification_image.modulate = Color(base_color.r, base_color.g, base_color.b, 1)
 # CHILD KNOWLEDGE # CHILD KNOWLEDGE # CHILD KNOWLEDGE # CHILD KNOWLEDGE 
-@onready var occupant: Node = null
-var can_be_attacked_by = [] # pieces add themselves as reference here
-var can_be_traversed_by = [] # pieces add themselves as reference here
+var _occupant: Node = null
+
+var occupant: Node:
+	get:
+		return _occupant
+	set(value):
+		# old value
+		var previous = _occupant
+		
+		# assign new one
+		_occupant = value
+		for piece in can_be_reached_by:
+			piece.calculate_relations()
+		tile_manager._refresh_selected_piece_highlights()
+
+
+func _on_occupant_changed(old_value: Node, new_value: Node) -> void:
+	# Example:
+	for piece in can_be_reached_by:
+		piece.update_relations()  # ← your loop here
+	
+	# Debug if needed
+	#print("Tile", name, "changed occupant from", old_value, "to", new_value)
+
+
+var can_be_reached_by = [] # pieces add themselves as reference here
+# if self.occupant changes, then all pieces here will recalc_relationships
 
 
 var color: Color = Color.WHITE: # all color changes go to here
@@ -118,8 +143,18 @@ var playable: bool = true: # to set to true, you cant use the button, use the "a
 				occupant.playable = false
 			else:
 				occupant.playable = true
+		##### now re calc relationships
+		#if can_be_attacked_by:
+			#for piece in can_be_attacked_by:
+				#piece.calculate_relations()2
+		#if can_be_traversed_by:
+			#for piece in can_be_traversed_by:
+				#piece.calculate_relations()
+		for piece in can_be_reached_by:
+			piece.calculate_relations()
 	get:
 		return playable
+		
 
 signal clicked_tile(tile)
 
@@ -255,7 +290,7 @@ func _on_click():
 	#skirmish._Randomize_Delete_Tiles()
 	#spawnpiece()
 	#print(name, " with faction ", faction, " and power of ", fortification, )
-	#print("attackers= ",can_be_attacked_by, "traversals= ",can_be_traversed_by)
+	print("reachers = ", can_be_reached_by.map(func(p): return p.name))
 	
 	
 func spawn_piece(piece_type: String, faction: String, push_pawn_vector: Vector2i):
@@ -376,13 +411,13 @@ func ramp_origin_color():
 	print()
 
 func _assess_threat() -> String:
-	if can_be_attacked_by.is_empty():
+	if can_be_reached_by.is_empty():
 		return ""
 
 	var counts := {}  # dictionary: faction -> count
 
 	# Count attackers by faction
-	for p in can_be_attacked_by:
+	for p in can_be_reached_by:
 		if p == null:
 			continue
 
@@ -405,3 +440,8 @@ func _assess_threat() -> String:
 			best_faction = f
 
 	return best_faction
+
+# when a piece can reach a tile, it adds a self reference to tile using this
+func _add_reacher(piece: Piece) -> void:
+	if not can_be_reached_by.has(piece):
+		can_be_reached_by.append(piece)

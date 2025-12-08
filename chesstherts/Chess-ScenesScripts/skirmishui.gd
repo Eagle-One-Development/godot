@@ -4,6 +4,8 @@ var skirmish: Node = null
 var turns_type: String = "skirmish"
 @export var tile_scene: Node = null
 var tile_manager
+var faction1: String = ""
+var faction2: String = ""
 @export var ui_x: int = 264
 
 @onready var Main: Panel = $Main
@@ -53,21 +55,23 @@ func init(skirmish_ref: Node, turns_type_ref: String, tile_manager_ref: Node,) -
 	
 
 func _on_button1_pressed() -> void:
-	print("Button1 was pressed!")
-	skirmish._Randomize_Delete_Tiles()
+	print("# # # # Button1 was pressed!")
+	AutoMove.faction_move_random_one(tile_manager.faction1)
+	#
 
 
 func _on_button2_pressed() -> void:
-	print("Button2 was pressed!")
-	var piece = tile_manager.SelectedPiece
-	if piece:
-		AutoMove.faction_move_random_one(piece.faction)
-	else:
-		AutoMove.faction_move_random_one(tile_manager.faction2)
+	print("# # # # Button2 was pressed!")
+	AutoMove.faction_move_random_one(tile_manager.faction2)
+	#var piece = tile_manager.SelectedPiece
+	#if piece:
+		#AutoMove.faction_move_random_one(piece.faction)
+	#else:
+		#AutoMove.faction_move_random_one(tile_manager.faction2)
 
 
 func _on_button3_pressed() -> void:
-	print("Button3 was pressed!")
+	print("# # # # Button3 was pressed!")
 	var piece = tile_manager.SelectedPiece
 	AutoMove.piece_move(piece)
 
@@ -97,3 +101,19 @@ func _piece_to_graveyard(piece: Piece) -> void:
 	piece.visible = true
 
 	print(piece, " sent to GY (index=", index, " row=", row, " col=", col, ")")
+
+
+@onready var timer_label: Label = $Main/TimerLabel
+
+
+func update_timer(time_sec: float) -> void:
+	if timer_label == null:
+		return
+	timer_label.text = "time = %0.1fs" % time_sec
+
+
+func update_faction_timers(t1: float, t2: float) -> void:
+	if has_node("Main/Faction1Timer") and has_node("Main/Faction2Timer"):
+		$Main/Faction1Timer.text = faction1 + " time = %0.1fs" % t1
+		$Main/Faction2Timer.text = faction2 + " time = %0.1fs" % t2
+	update_timer((t1 + t2))

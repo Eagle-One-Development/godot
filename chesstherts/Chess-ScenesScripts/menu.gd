@@ -50,3 +50,11 @@ func tile_color_to_factions():
 	#print()
 	tile_light_color2 = tile_light_color.lerp(FactionManager.get_color(faction1, "primary"), 1)
 	tile_dark_color2 = tile_dark_color.lerp(FactionManager.get_color(faction2, "primary"), 1)
+
+
+func spawn_new_skirmish():
+	SkirmishManager.create_skirmish()
+
+
+func _on_NewSkirmishButton_pressed():
+	spawn_new_skirmish()
