@@ -38,6 +38,7 @@ offset_right = 109.0
 offset_bottom = 90.0
 
 [node name="Faction1Timer" type="Label" parent="Main"]
+layout_mode = 0
 offset_top = 36.0
 offset_right = 40.0
 offset_bottom = 59.0
@@ -46,6 +47,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="Faction2Timer" type="Label" parent="Main"]
+layout_mode = 0
 offset_top = 18.0
 offset_right = 39.0
 offset_bottom = 41.0

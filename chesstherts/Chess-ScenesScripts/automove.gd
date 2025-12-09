@@ -119,7 +119,35 @@ static func _score_tile(piece, tile: Node2D) -> int:
 	# 4. Discourage revisiting previous positions
 	# this should be ignored if capturing enemy
 	if piece.xy_log.has(tile.xy):
-		score += -6.66
+		score += -3.131313
+	#
+	# PROXIMITY TO ALLIES (squared-distance, fully typed components)
+	var ALLY_DISTANCE_WEIGHT: float = 1.0
+	var MAX_DISTANCE_CONSIDERED: int = 6
+	var max_dist_sq: int = MAX_DISTANCE_CONSIDERED * MAX_DISTANCE_CONSIDERED
+	var ally_bonus: float = 0.0
+
+	var all_faction_pieces := FactionManager.get_playable_pieces_by_faction(piece.faction)
+
+	for ally in all_faction_pieces:
+		if ally == null:
+			continue
+		if ally == piece:
+			continue
+
+		# Use typed integer components to avoid Vector type inference
+		var dx: int = tile.xy.x - ally.xy.x
+		var dy: int = tile.xy.y - ally.xy.y
+		var dist_sq: int = dx * dx + dy * dy
+		if dist_sq == 0:
+			continue
+
+		if dist_sq <= max_dist_sq:
+			# convert to float and use sqrt once per ally
+			ally_bonus += ALLY_DISTANCE_WEIGHT * (1.0 / sqrt(float(dist_sq)))
+
+	score += ally_bonus
+
 	print("score w/ xylog final = ", tile.xy, " = ", score)
 	return score
 
@@ -180,7 +208,7 @@ static func faction_move_random_one(faction: String) -> void:
 		# MUST recalc before deciding
 		p.calculate_relations()
 
-		if not p.can_traverse_tiles.is_empty() or not p.can_attack_tiles.is_empty():
+		if not p.can_traverse_tiles.is_empty() or not p.can_attack_tiles.is_empty() or p.is_moving:
 			movable_pieces.append(p)
 
 	# If no piece has a valid move, stop

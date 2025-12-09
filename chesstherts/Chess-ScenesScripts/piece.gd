@@ -95,6 +95,9 @@ func _add_blocking_reference(piece: Node):
 		is_blocking_sliders.append(piece)
 		print(self.name, " added block reference = ", piece.name)
 
+var is_moving: bool = false
+
+
 # CHILD KNOWLEDGE # CHILD KNOWLEDGE # CHILD KNOWLEDGE # CHILD KNOWLEDGE #
 # SIGNALS
 signal playable_changed(new_value: bool)
@@ -384,6 +387,11 @@ func load_assets():
 # M O V E 
 
 func move(target_xy):
+	if is_moving: # prevents crash
+		print("Move ignored — piece still moving:", name)
+		return
+	is_moving = true
+	
 	#print("MOVE REQUEST: ", self, " to ", target_xy)
 	depart_tile_occupation()
 	# --- MOVE ANIMATION INSERTED HERE ---
@@ -396,13 +404,13 @@ func move(target_xy):
 	
 func animate_move(target_pos: Vector2) -> void:
 	var tween := create_tween()
-	tween.tween_property(self, "position", target_pos, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(self, "position", target_pos, 0.8).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
 	await tween.finished
 
 func depart_tile_occupation():
 	#clear old information
-	occupying.occupant = null
-	occupying = null
+	#occupying.occupant = null
+	#occupying = null
 	update_relations_of_previously_blocked_sliders()
 	clear_relations_to_tiles()
 	#is_blocking_sliders.clear() # redundant?
@@ -420,6 +428,10 @@ func arrive_tile_occupation(target_xy):
 	# decision tree priority: Defend -> attack -> move
 	# defend is an attack + bonuses
 	# move is no attack
+	
+#	occupying.occupant = null
+	#occupying = null
+	
 	xy = target_xy.xy
 	target_xy.occupant = self
 	occupying = target_xy
@@ -431,6 +443,7 @@ func arrive_tile_occupation(target_xy):
 	
 	update_relations_of_previously_blocked_sliders()
 	is_blocking_sliders.clear()
+	is_moving = false
 	if _highlight_active == true:
 		highlight_my_reach()
 	#print()
